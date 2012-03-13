@@ -1,2 +1,5 @@
 *.pyc
 test_project/db.sqlite
+*.egg-info
+build
+dist
