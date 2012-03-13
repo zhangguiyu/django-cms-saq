@@ -1,0 +1,105 @@
+- model: cms.CMSPlugin
+  pk: 1
+  fields:
+    language: en
+    plugin_type: SingleChoiceQuestionPlugin
+    level: 0
+    lft: 0
+    rght: 0
+    tree_id: 0
+- model: cms_saq.Question
+  pk: 1
+  fields:
+    slug: favourite-colour
+    question_type: S
+- model: cms_saq.Answer
+  pk: 1
+  fields:
+    title: Red
+    slug: red
+    score: 10
+    question: 1
+- model: cms_saq.Answer
+  pk: 2
+  fields:
+    title: Green
+    slug: green
+    score: 20
+    question: 1
+- model: cms_saq.Answer
+  pk: 3
+  fields:
+    title: Blue
+    slug: blue
+    score: 30
+    question: 1
+- model: cms.CMSPlugin
+  pk: 2
+  fields:
+    language: en
+    plugin_type: SingleChoiceQuestionPlugin
+    level: 0
+    lft: 0
+    rght: 0
+    tree_id: 0
+- model: cms_saq.Question
+  pk: 2
+  fields:
+    slug: favourite-sport
+    question_type: S
+- model: cms_saq.Answer
+  pk: 4
+  fields:
+    title: Football
+    slug: football
+    score: 40
+    question: 2
+- model: cms_saq.Answer
+  pk: 5
+  fields:
+    title: Rugby
+    slug: rugby
+    score: 50
+    question: 2
+- model: cms_saq.Answer
+  pk: 6
+  fields:
+    title: Cricket
+    slug: cricket
+    score: 60
+    question: 2
+- model: cms.CMSPlugin
+  pk: 3
+  fields:
+    language: en
+    plugin_type: MultiChoiceQuestionPlugin
+    level: 0
+    lft: 0
+    rght: 0
+    tree_id: 0
+- model: cms_saq.Question
+  pk: 3
+  fields:
+    slug: sports-you-play
+    question_type: M
+- model: cms_saq.Answer
+  pk: 7
+  fields:
+    title: Football
+    slug: football
+    score: 50
+    question: 3
+- model: cms_saq.Answer
+  pk: 8
+  fields:
+    title: Rugby
+    slug: rugby
+    score: 100
+    question: 3
+- model: cms_saq.Answer
+  pk: 9
+  fields:
+    title: Cricket
+    slug: cricket
+    score: 200
+    question: 3

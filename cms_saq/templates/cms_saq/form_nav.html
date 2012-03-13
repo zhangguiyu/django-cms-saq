@@ -1,0 +1,29 @@
+{% load cms_tags sekizai_tags %}
+
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/underscore-1.3.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/json2.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/backbone-0.9.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/saq.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}
+<script type="text/javascript">
+    $(function () {
+        SAQ.formNav = new SAQ.FormView({
+            el: $('#saq-form-nav-{{ instance.pk }}')[0],
+            nextUrl: {% if instance.next_page %}'{% page_url instance.next_page %}'{% else %}null{% endif %},
+            submitUrl: '{% url cms_saq_submit %}'
+        });
+    });
+</script>
+{% endaddtoblock %}
+
+<div id="saq-form-nav-{{ instance.pk }}" class="saq-form-nav">
+    {% if instance.prev_page %}
+    <a class="saq-prev-button" href="{% page_url instance.prev_page %}">{{ instance.prev_page_label|default:"Back" }}</a>
+    {% endif %}
+    {% if instance.next_page %}
+    <a class="saq-next-button" href="#">{{ instance.next_page_label|default:"Next" }}</a>
+    <span class="saq-ticker"></span>
+    {% endif %}
+    {% csrf_token %}
+</div>
+{# vim:set filetype=htmldjango: #}

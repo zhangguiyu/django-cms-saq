@@ -1,0 +1,41 @@
+{% load sekizai_tags %}
+
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/underscore-1.3.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/json2.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/backbone-0.9.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/saq.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}
+<script type="text/javascript">
+    $(function () {
+        var model = new SAQ.Question({
+            slug: '{{ question.slug }}',
+            choices: [
+            {% for answer in answers %}
+                '{{ answer.slug }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+            ]
+        });
+        var view = new SAQ.SingleChoiceQuestionView({
+            el: $('#saq-question-single-{{ question.slug }}')[0],
+            model: model
+        });
+        SAQ.questions.add(model);
+    });
+</script>
+{% endaddtoblock %}
+
+<ul class="saq-question saq-question-single" id="saq-question-single-{{ question.slug }}">
+    <li class="saq-question-error"></li>
+    {% for answer in answers %}
+    <li class='saq-answer saq-answer-single'>
+        <input type="radio" id="saq-answer-single-{{ answer.pk }}" name="{{ question.slug }}" value="{{ answer.slug }}" {% if submission and answer.slug == submission.answer %}checked{% endif %}>
+        <label for="saq-answer-single-{{ answer.pk }}">
+            <div class="saq-answer-title">{{ answer.title }}</div>
+            <div class="saq-answer-help-text">
+                {{ answer.help_text|linebreaks }}
+            </div>
+        </label>
+    </li>
+    {% endfor %}
+</ul>
+{# vim: set filetype=htmldjango: #}

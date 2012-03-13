@@ -1,0 +1,54 @@
+{% load sekizai_tags %}
+
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/underscore-1.3.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/json2.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/backbone-0.9.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/saq.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}
+<script type="text/javascript">
+    $(function () {
+        var model = new SAQ.Question({
+            slug: '{{ question.slug }}',
+            choices: [
+            {% for answer in answers %}
+                '{{ answer.slug }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+            ]
+        });
+        var view = new SAQ.DropDownQuestionView({
+            el: $('#saq-question-drop-{{ question.slug }}')[0],
+            model: model
+        });
+        SAQ.questions.add(model);
+    });
+</script>
+{% endaddtoblock %}
+
+<div>
+{% if question.label %}
+<div>
+    <label class="saq-question-label" for="saq-question-drop-{{ question.slug }}">{{ question.label }}</label>
+    <span class="saq-question-help-text">{{ question.help_text }}</span>
+</div>
+{% endif %}
+<div id="saq-question-drop-{{ question.slug }}">
+<div class="saq-question-error"></div>
+<select class="saq-question saq-question-drop">
+    <option value="">---</option>
+    {% if grouped_answers %}
+        {% for label, group in grouped_answers %}
+            <optgroup label="{{ label }}">
+                {% for answer in group %}
+                    <option value="{{ answer.slug }}" {% if submission and answer.slug == submission.answer %}selected{% endif %}>{{ answer.title }}</option>
+                {% endfor %}
+            </optgroup>
+        {% endfor %}
+    {% else %}
+        {% for answer in answers %}
+            <option value="{{ answer.slug }}" {% if submission and answer.slug == submission.answer %}selected{% endif %}>{{ answer.title }}</option>
+        {% endfor %}
+    {% endif %}
+</select>
+</div>
+</div>
+{# vim: set filetype=htmldjango: #}

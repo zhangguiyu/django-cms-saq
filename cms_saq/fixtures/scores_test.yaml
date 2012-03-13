@@ -1,0 +1,57 @@
+- model: auth.User
+  pk: 1
+  fields:
+    username: uncle_bill
+    first_name: Bill
+    last_name: Smith
+    email: 'bill@example.com'
+    password: 'sha1$21b68$aa83e522a986e87d4a136c39798621211d6ddc3b'
+    is_superuser: false
+    is_staff: false
+    is_active: true
+- model: auth.User
+  pk: 2
+  fields:
+    username: auntie_rach
+    first_name: Rachel
+    last_name: Smith
+    email: 'rach@example.com'
+    password: 'sha1$21b68$aa83e522a986e87d4a136c39798621211d6ddc3b'
+    is_superuser: false
+    is_staff: false
+    is_active: true
+- model: cms_saq.Submission
+  pk: 1
+  fields:
+    question: favourite-colour
+    answer: red
+    user: 1
+    score: 10
+- model: cms_saq.Submission
+  pk: 2
+  fields:
+    question: favourite-sport
+    answer: football
+    user: 1
+    score: 40
+- model: cms_saq.Submission
+  pk: 3
+  fields:
+    question: sports-you-play
+    answer: football,rugby,cricket
+    user: 1
+    score: 350
+- model: cms_saq.Submission
+  pk: 4
+  fields:
+    question: favourite-colour
+    answer: blue
+    user: 2
+    score: 30
+- model: cms_saq.Submission
+  pk: 5
+  fields:
+    question: favourite-sport
+    answer: cricket
+    user: 2
+    score: 60
