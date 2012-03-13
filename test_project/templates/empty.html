@@ -1,0 +1,17 @@
+{% load cms_tags sekizai_tags %}
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Empty template</title>
+    {% render_block "css" %}
+</head>
+<body>
+    {% cms_toolbar %}
+
+    {% block main %}
+        {% placeholder "main" %}
+    {% endblock %}
+
+    {% render_block "js" %}
+</body>
