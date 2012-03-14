@@ -8,12 +8,7 @@
 <script type="text/javascript">
     $(function () {
         var model = new SAQ.Question({
-            slug: '{{ question.slug }}',
-            choices: [
-            {% for answer in answers %}
-                '{{ answer.slug }}'{% if not forloop.last %},{% endif %}
-            {% endfor %}
-            ]
+            slug: '{{ question.slug }}'
         });
         var view = new SAQ.MultiChoiceQuestionView({
             el: $('#saq-question-multi-{{ question.slug }}')[0],

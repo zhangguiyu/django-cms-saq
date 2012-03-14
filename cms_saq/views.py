@@ -16,14 +16,14 @@ ANSWER_RE = re.compile(r'^[\w-]+(,[\w-]+)*$')
 @allow_lazy_user
 def submit(request):
     for question_slug, answers in request.POST.iteritems():
-        # check answers is a list of slugs
-        if not ANSWER_RE.match(answers):
-            return HttpResponseBadRequest("Invalid answers: %s" % answers)
         # validate the question
         try:
             question = Question.objects.get(slug=question_slug)
         except Question.DoesNotExist:
             return HttpResponseBadRequest("Invalid question '%s'" % question_slug)
+        # check answers is a list of slugs
+        if question.question_type != 'F' and not ANSWER_RE.match(answers):
+            return HttpResponseBadRequest("Invalid answers: %s" % answers)
         # validate and score the answer
         try:
             score = question.score(answers)

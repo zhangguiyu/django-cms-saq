@@ -61,6 +61,13 @@ class SubmissionTest(TestCase):
         self.assertEqual(1, Submission.objects.all().count())
         Submission.objects.get(question='sports-you-play', answer='football,rugby', score=150)
 
+    def test_submit_freetextanswer(self):
+        """Ensure free-text answers don't get parsed/validated as choices."""
+        r = self.client.post(reverse('cms_saq_submit'), {'favourite-team': 'Bath RFC'})
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(1, Submission.objects.all().count())
+        Submission.objects.get(question='favourite-team', answer='Bath RFC', score=0)
+
 
 class ScoresTest(TestCase):
     fixtures = ['scores_test']

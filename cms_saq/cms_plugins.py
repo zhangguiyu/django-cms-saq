@@ -67,7 +67,6 @@ class GroupedDropDownQuestionPlugin(QuestionPlugin):
     inlines = [NoHelpTextGroupedAnswerAdmin]
     question_type = "S"
 
-
     def render(self, context, instance, placeholder):
         new_ctx = super(GroupedDropDownQuestionPlugin, self).render(context, instance, placeholder)
         answers = list(GroupedAnswer.objects.filter(question=instance))
@@ -75,6 +74,12 @@ class GroupedDropDownQuestionPlugin(QuestionPlugin):
         grouped_answers = [[key, list(group)] for key, group in grouped_answers]
         new_ctx.update({'grouped_answers': grouped_answers})
         return new_ctx
+
+class FreeTextQuestionPlugin(QuestionPlugin):
+    name = "Free Text Question"
+    render_template = "cms_saq/free_text_question.html"
+    inlines = []
+    question_type = "F"
 
 class FormNavPlugin(CMSPluginBase):
     model = FormNav
@@ -90,5 +95,6 @@ plugin_pool.register_plugin(SingleChoiceQuestionPlugin)
 plugin_pool.register_plugin(MultiChoiceQuestionPlugin)
 plugin_pool.register_plugin(DropDownQuestionPlugin)
 plugin_pool.register_plugin(GroupedDropDownQuestionPlugin)
+plugin_pool.register_plugin(FreeTextQuestionPlugin)
 plugin_pool.register_plugin(FormNavPlugin)
 

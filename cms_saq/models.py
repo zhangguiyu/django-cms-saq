@@ -29,6 +29,7 @@ class Question(CMSPlugin):
     QUESTION_TYPES = [
         ('S', 'Single-choice question'),
         ('M', 'Multi-choice question'),
+        ('F', 'Free-text question'),
     ]
 
     slug = models.SlugField(unique=True,
@@ -39,7 +40,9 @@ class Question(CMSPlugin):
     question_type = models.CharField(max_length=1, choices=QUESTION_TYPES)
 
     def score(self, answers):
-        if self.question_type == 'S':
+        if self.question_type == 'F':
+            return 0
+        elif self.question_type == 'S':
             return self.answers.get(slug=answers).score
         elif self.question_type == 'M':
             answers_list = answers.split(',')

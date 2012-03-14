@@ -15,7 +15,7 @@ $(function () {
         postValidate: function (attrs) {
             var value = attrs['value'];
             if (value === undefined || value === null || value === "") {
-                return "Please select an answer to this question.";
+                return "Please submit an answer to this question.";
             }
         }
     });
@@ -66,6 +66,12 @@ $(function () {
     SAQ.DropDownQuestionView = SAQ.QuestionView.extend({
         changeValue: function () {
             this.model.set('value', this.$('select').val());
+        }
+    });
+
+    SAQ.FreeTextQuestionView = SAQ.QuestionView.extend({
+        changeValue: function () {
+            this.model.set('value', this.$('input').val());
         }
     });
 

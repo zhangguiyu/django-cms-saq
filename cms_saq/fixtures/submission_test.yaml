@@ -103,3 +103,17 @@
     slug: cricket
     score: 200
     question: 3
+- model: cms.CMSPlugin
+  pk: 4
+  fields:
+    language: en
+    plugin_type: FreeTextQuestionPlugin
+    level: 0
+    lft: 0
+    rght: 0
+    tree_id: 0
+- model: cms_saq.Question
+  pk: 4
+  fields:
+    slug: favourite-team
+    question_type: F

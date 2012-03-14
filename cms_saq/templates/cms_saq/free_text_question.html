@@ -10,8 +10,8 @@
         var model = new SAQ.Question({
             slug: '{{ question.slug }}'
         });
-        var view = new SAQ.DropDownQuestionView({
-            el: $('#saq-question-drop-{{ question.slug }}')[0],
+        var view = new SAQ.FreeTextQuestionView({
+            el: $('#saq-question-free-{{ question.slug }}')[0],
             model: model
         });
         SAQ.questions.add(model);
@@ -22,28 +22,13 @@
 <div>
 {% if question.label %}
 <div>
-    <label class="saq-question-label" for="saq-question-drop-{{ question.slug }}">{{ question.label }}</label>
+    <label class="saq-question-label" for="saq-question-free-{{ question.slug }}">{{ question.label }}</label>
     <span class="saq-question-help-text">{{ question.help_text }}</span>
 </div>
 {% endif %}
-<div id="saq-question-drop-{{ question.slug }}">
+<div id="saq-question-free-{{ question.slug }}">
 <div class="saq-question-error"></div>
-<select class="saq-question saq-question-drop">
-    <option value="">---</option>
-    {% if grouped_answers %}
-        {% for label, group in grouped_answers %}
-            <optgroup label="{{ label }}">
-                {% for answer in group %}
-                    <option value="{{ answer.slug }}" {% if submission and answer.slug == submission.answer %}selected{% endif %}>{{ answer.title }}</option>
-                {% endfor %}
-            </optgroup>
-        {% endfor %}
-    {% else %}
-        {% for answer in answers %}
-            <option value="{{ answer.slug }}" {% if submission and answer.slug == submission.answer %}selected{% endif %}>{{ answer.title }}</option>
-        {% endfor %}
-    {% endif %}
-</select>
+<input class="saq-question saq-question-free" type="text" value="{{ submission.answer }}">
 </div>
 </div>
 {# vim: set filetype=htmldjango: #}
