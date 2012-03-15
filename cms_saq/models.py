@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Max, Sum
 
 from cms.models import CMSPlugin
 from cms.models.fields import PageField
@@ -73,3 +74,38 @@ class FormNav(CMSPlugin):
     prev_page = PageField(blank=True, null=True, related_name="formnav_prevs")
     prev_page_label = models.CharField(max_length=255, blank=True, null=True)
 
+class SectionedScoring(CMSPlugin):
+    def scores_for_user(self, user):
+        scores = [[s.label, s.score_for_user(user)] for s in self.sections.all()]
+        overall = sum([s[1] for s in scores]) / len(scores)
+        return [scores, overall]
+
+class ScoreSection(models.Model):
+    group = models.ForeignKey('cms_saq.SectionedScoring', related_name='sections')
+    label = models.CharField(max_length=255)
+    tag = models.CharField(max_length=255)
+    order = models.IntegerField()
+
+    class Meta:
+        ordering = ('order', 'label')
+
+    def score_for_user(self, user):
+        questions = Question.objects.filter(tags__name__in=[self.tag])
+        scores = []
+        for question in questions:
+            if question.question_type == "S":
+                max_score = question.answers.aggregate(Max('score'))['score__max']
+            elif question.question_type == "M":
+                max_score = question.answers.aggregate(Sum('score'))['score__sum']
+            else:
+                continue # don't score free-text answers
+            try:
+                score = Submission.objects.get(question=question.slug, user=user).score
+            except Submission.DoesNotExist:
+                score = 0
+            if max_score:
+                scores.append(100.0 * score / max_score)
+        if len(scores):
+            return sum(scores) / len(scores)
+        else:
+            return 0

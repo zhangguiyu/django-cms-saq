@@ -5,7 +5,8 @@ from django.contrib import admin
 from cms.plugin_base import CMSPluginBase
 from cms.plugin_pool import plugin_pool
 
-from cms_saq.models import Question, Answer, GroupedAnswer, Submission, FormNav
+from cms_saq.models import Question, Answer, GroupedAnswer, Submission, \
+        FormNav, SectionedScoring, ScoreSection
 
 class AnswerAdmin(admin.StackedInline):
     model = Answer
@@ -91,10 +92,31 @@ class FormNavPlugin(CMSPluginBase):
         context.update({'instance': instance})
         return context
 
+class ScoreSectionAdmin(admin.TabularInline):
+    model = ScoreSection
+    extra = 0
+    verbose_name = "section"
+
+class SectionedScoringPlugin(CMSPluginBase):
+    model = SectionedScoring
+    name = "Sectioned Scoring"
+    module = "SAQ"
+    render_template = "cms_saq/sectioned_scoring.html"
+    inlines = [ScoreSectionAdmin]
+
+    def render(self, context, instance, placeholder):
+        scores, overall = instance.scores_for_user(context['request'].user)
+        context.update({
+            'scores': scores,
+            'overall': overall
+        })
+        return context
+
 plugin_pool.register_plugin(SingleChoiceQuestionPlugin)
 plugin_pool.register_plugin(MultiChoiceQuestionPlugin)
 plugin_pool.register_plugin(DropDownQuestionPlugin)
 plugin_pool.register_plugin(GroupedDropDownQuestionPlugin)
 plugin_pool.register_plugin(FreeTextQuestionPlugin)
 plugin_pool.register_plugin(FormNavPlugin)
+plugin_pool.register_plugin(SectionedScoringPlugin)
 
