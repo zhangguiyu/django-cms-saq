@@ -41,7 +41,7 @@ if getattr(settings, "SAQ_LAZYSIGNUP", False):
     from lazysignup.decorators import allow_lazy_user
     submit = allow_lazy_user(_submit)
 else:
-    submit = login_required(submit)
+    submit = login_required(_submit)
 
 
 @require_GET
