@@ -5,16 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.cache import never_cache
 from django.utils import simplejson
-
-from lazysignup.decorators import allow_lazy_user
+from django.conf import settings
 
 from cms_saq.models import Question, Answer, Submission
 
 ANSWER_RE = re.compile(r'^[\w-]+(,[\w-]+)*$')
 
+
 @require_POST
-@allow_lazy_user
-def submit(request):
+def _submit(request):
     for question_slug, answers in request.POST.iteritems():
         # validate the question
         try:
@@ -37,6 +36,13 @@ def submit(request):
             attrs.update(filter_attrs)
             Submission.objects.create(**attrs)
     return HttpResponse("OK")
+
+if getattr(settings, "SAQ_LAZYSIGNUP", False):
+    from lazysignup.decorators import allow_lazy_user
+    submit = allow_lazy_user(_submit)
+else:
+    submit = login_required(submit)
+
 
 @require_GET
 @never_cache
