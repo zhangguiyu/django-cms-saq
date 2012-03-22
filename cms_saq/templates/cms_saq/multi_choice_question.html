@@ -1,4 +1,4 @@
-{% load sekizai_tags %}
+{% load sekizai_tags markup %}
 
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/underscore-1.3.1.min.js"></script>{% endaddtoblock %}
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/json2.js"></script>{% endaddtoblock %}
@@ -27,7 +27,7 @@
         <label for="saq-answer-multi-{{ answer.pk }}">
             <div class="saq-answer-title">{{ answer.title }}</div>
             <div class="saq-answer-help-text">
-                {{ answer.help_text|linebreaks }}
+                {{ answer.help_text|markdown }}
             </div>
         </label>
     </li>
