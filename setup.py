@@ -13,7 +13,7 @@ setup(
     author='Olly Smith',
     author_email='oliver.smith@maplecroft.com',
     url='http://git.maplecroft.com/',
-    packages=['cms_saq'],
+    packages=['cms_saq', 'cms_saq.migrations'],
     license='Maplecroft',
     include_package_data = True,
 )
