@@ -6,19 +6,14 @@ Replace this with more appropriate tests for your application.
 """
 
 from django.test import TestCase
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.test.client import Client
+from django.test.client import Client, RequestFactory
 from django.utils import simplejson
+from django.template import Template, RequestContext
 
-from cms_saq.models import Submission
+from cms_saq.models import Submission, Question
 
-
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.assertEqual(1 + 1, 2)
 
 class SubmissionTest(TestCase):
     fixtures = ['submission_test']
@@ -122,4 +117,73 @@ class ScoresTest(TestCase):
                 },
             }
         })
+
+
+class TemplateTagsTest(TestCase):
+    fixtures = ['scores_test', 'submission_test']
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def _request_for_user(self, username):
+        request = self.factory.get('/foobar')
+        request.user = User.objects.get(username=username)
+        return request
+
+    def test_saq_raw_answer(self):
+        request = self._request_for_user('auntie_rach')
+        # test for an existing answer
+        template = Template("{% load saq_tags %}{% saq_raw_answer \"favourite-team\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, 'McLaren')
+        # test for a non-existent answer
+        template = Template("{% load saq_tags %}{% saq_raw_answer \"favourite-ice-cream\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '')
+
+    def test_saq_nice_answer(self):
+        request = self._request_for_user('auntie_rach')
+        # test for an existing answer
+        template = Template("{% load saq_tags %}{% saq_nice_answer \"favourite-sport\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, 'Cricket')
+        # test for a non-existent answer
+        template = Template("{% load saq_tags %}{% saq_nice_answer \"favourite-ice-cream\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '')
+
+    def test_saq_percent_score(self):
+        request = self._request_for_user('uncle_bill')
+        template = Template("{% load saq_tags %}{% saq_percent_score \"favourite-colour\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '33')
+        request = self._request_for_user('auntie_rach')
+        template = Template("{% load saq_tags %}{% saq_percent_score \"favourite-colour\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '100')
+        template = Template("{% load saq_tags %}{% saq_percent_score \"favourite-ice-cream\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '0')
+
+    def test_saq_aggregate_percent_score_by_tags(self):
+        # setup tags, 'cos fixtures suck for tags
+        Question.objects.get(slug='favourite-colour').tags.add('favourites')
+        Question.objects.get(slug='favourite-sport').tags.add('favourites', 'sports')
+        Question.objects.get(slug='sports-you-play').tags.add('sports')
+        request = self._request_for_user('uncle_bill')
+        template = Template("{% load saq_tags %}{% saq_aggregate_percent_score_by_tags \"favourites\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '50')
+        request = self._request_for_user('auntie_rach')
+        template = Template("{% load saq_tags %}{% saq_aggregate_percent_score_by_tags \"favourites\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '100')
+        request = self._request_for_user('uncle_bill')
+        template = Template("{% load saq_tags %}{% saq_aggregate_percent_score_by_tags \"favourites,sports\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '67')
+        request = self._request_for_user('auntie_rach')
+        template = Template("{% load saq_tags %}{% saq_aggregate_percent_score_by_tags \"favourites,sports\" %}")
+        out = template.render(RequestContext(request))
+        self.assertEqual(out, '67')
 

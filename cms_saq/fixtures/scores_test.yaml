@@ -55,3 +55,10 @@
     answer: cricket
     user: 2
     score: 60
+- model: cms_saq.Submission
+  pk: 6
+  fields:
+    question: favourite-team
+    answer: McLaren
+    user: 2
+    score: 0

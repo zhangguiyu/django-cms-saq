@@ -49,6 +49,27 @@ class Question(CMSPlugin):
             answers_list = answers.split(',')
             return sum([self.answers.get(slug=a).score for a in answers_list])
 
+    @property
+    def max_score(self):
+        if not hasattr(self, '_max_score'):
+            if self.question_type == "S":
+                self._max_score = self.answers.aggregate(Max('score'))['score__max']
+            elif self.question_type == "M":
+                self._max_score = self.answers.aggregate(Sum('score'))['score__sum']
+            else:
+                self._max_score = None # don't score free-text answers
+        return self._max_score
+
+    def percent_score_for_user(self, user):
+        if self.max_score:
+            try:
+                score = Submission.objects.get(question=self.slug, user=user).score
+            except Submission.DoesNotExist:
+                return 0
+            return 100.0 * score / self.max_score
+        else:
+            return None
+
     def __unicode__(self):
         return self.slug
 
@@ -90,22 +111,18 @@ class ScoreSection(models.Model):
         ordering = ('order', 'label')
 
     def score_for_user(self, user):
-        questions = Question.objects.filter(tags__name__in=[self.tag])
-        scores = []
-        for question in questions:
-            if question.question_type == "S":
-                max_score = question.answers.aggregate(Max('score'))['score__max']
-            elif question.question_type == "M":
-                max_score = question.answers.aggregate(Sum('score'))['score__sum']
-            else:
-                continue # don't score free-text answers
-            try:
-                score = Submission.objects.get(question=question.slug, user=user).score
-            except Submission.DoesNotExist:
-                score = 0
-            if max_score:
-                scores.append(100.0 * score / max_score)
-        if len(scores):
-            return sum(scores) / len(scores)
-        else:
-            return 0
+        return aggregate_score_for_user_by_tags(user, [self.tag])
+
+
+def aggregate_score_for_user_by_tags(user, tags):
+    questions = Question.objects.filter(tags__name__in=tags).distinct()
+    scores = []
+    for question in questions:
+        score = question.percent_score_for_user(user)
+        if score is not None:
+            scores.append(score)
+    if len(scores):
+        return sum(scores) / len(scores)
+    else:
+        return 0
+
