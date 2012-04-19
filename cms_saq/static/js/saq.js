@@ -109,10 +109,10 @@ $(function () {
         initialize: function () {
             this.submitting = false;
         },
-        submitFormsAndEnd: function() {
-            return this.submitForms(true);
+        submitFormsAndEnd: function(e) {
+            return this.submitForms(e, true);
         },
-        submitForms: function (andEnd) {
+        submitForms: function (e, andEnd) {
             var self = this;
             if (!this.submitting && SAQ.questions.validate()) {
                 this.submitting = true;
