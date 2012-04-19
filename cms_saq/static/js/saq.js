@@ -103,12 +103,16 @@ $(function () {
 
     SAQ.FormView = Backbone.View.extend({
         events: {
-            'click .saq-next-button': 'submitForms'
+            'click .saq-next-button': 'submitForms',
+            'click .saq-end-button': 'submitFormsAndEnd'
         },
         initialize: function () {
             this.submitting = false;
         },
-        submitForms: function () {
+        submitFormsAndEnd: function() {
+            return this.submitForms(true);
+        },
+        submitForms: function (andEnd) {
             var self = this;
             if (!this.submitting && SAQ.questions.validate()) {
                 this.submitting = true;
@@ -119,7 +123,13 @@ $(function () {
                     data: SAQ.questions.asMap(),
                     type: 'POST',
                     error: function () { self.onSubmitError(); },
-                    success: function () { self.onSubmitSuccess(); },
+                    success: function () {
+                        if (andEnd) {
+                            self.onSubmitSuccessEnd();
+                        } else {
+                            self.onSubmitSuccess();
+                        }
+                    },
                     complete: function () { self.onSubmitComplete(); }
                 });
             }
@@ -132,6 +142,9 @@ $(function () {
             alert("There was a problem submitting your answers. Please try again later.");
             // TODO we can do better than an alert()
         },
+        onSubmitSuccessEnd: function () {
+            window.location = this.options.endUrl;
+        },
         onSubmitSuccess: function () {
             window.location = this.options.nextUrl;
         },
@@ -141,10 +154,9 @@ $(function () {
             this.submitting = false;
         }
     });
-
     window.SAQ = SAQ;
-
 });
+
 
 // CSRF token protection for AJAX
 $.ajaxSetup({

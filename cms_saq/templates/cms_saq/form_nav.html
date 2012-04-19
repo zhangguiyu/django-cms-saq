@@ -10,6 +10,7 @@
         SAQ.formNav = new SAQ.FormView({
             el: $('#saq-form-nav-{{ instance.pk }}')[0],
             nextUrl: {% if instance.next_page %}'{% page_url instance.next_page %}'{% else %}null{% endif %},
+            endUrl: {% if instance.end_page %}'{% page_url instance.end_page %}'{% else %}null{% endif %},
             submitUrl: '{% url cms_saq_submit %}'
         });
     });
@@ -23,6 +24,9 @@
     {% if instance.next_page %}
     <a class="saq-next-button" href="#">{{ instance.next_page_label|default:"Next" }}</a>
     <span class="saq-ticker"></span>
+    {% endif %}
+    {% if met_end_condition and instance.end_page %}
+    <a class="saq-end-button" href="#">{{ instance.end_page_label|default:"Analysis" }}</a>
     {% endif %}
     {% csrf_token %}
 </div>

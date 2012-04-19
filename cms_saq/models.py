@@ -94,6 +94,10 @@ class FormNav(CMSPlugin):
     next_page_label = models.CharField(max_length=255, blank=True, null=True)
     prev_page = PageField(blank=True, null=True, related_name="formnav_prevs")
     prev_page_label = models.CharField(max_length=255, blank=True, null=True)
+    end_page = PageField(blank=True, null=True, related_name="formnav_ends")
+    end_page_label = models.CharField(max_length=255, blank=True, null=True)
+    end_page_condition_question = models.ForeignKey(Question, null=True, blank=True)
+
 
 class SectionedScoring(CMSPlugin):
     def scores_for_user(self, user):

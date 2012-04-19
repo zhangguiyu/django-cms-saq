@@ -89,7 +89,16 @@ class FormNavPlugin(CMSPluginBase):
     render_template = "cms_saq/form_nav.html"
 
     def render(self, context, instance, placeholder):
-        context.update({'instance': instance})
+        met_end_condition = False
+        if instance.end_page_condition_question:
+            end_condition_slug = instance.end_page_condition_question.slug
+            met_end_condition = (Submission.objects
+                .filter(user=context['user'], question=end_condition_slug)
+                .count()) > 0
+        context.update({
+            'instance': instance,
+            'met_end_condition': met_end_condition
+        })
         return context
 
 class ScoreSectionAdmin(admin.TabularInline):
