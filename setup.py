@@ -14,6 +14,6 @@ setup(
     author_email='james.rutherford@maplecroft.com',
     url='https://github.com/Maplecroft/django-cms-saq',
     packages=['cms_saq', 'cms_saq.migrations', 'cms_saq.management', 'cms_saq.management.commands', 'cms_saq.templatetags'],
-    license='Maplecroft',
+    license='LICENSE.txt',
     include_package_data = True,
 )
