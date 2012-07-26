@@ -9,7 +9,7 @@ self-assessment questionnaires using Django CMS.
 
 1. Install django-cms-saq and django-taggit using pip
 
-    pip install -f http://zeus.maplecroft.com/deployment_libs/ django-cms-saq django-taggit
+    pip install django-cms-saq django-taggit
 
 2. Add `cms_saq` and `taggit` to your `INSTALLED_APPS`
 
