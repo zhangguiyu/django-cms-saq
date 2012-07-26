@@ -14,7 +14,8 @@ $(function () {
         },
         postValidate: function (attrs) {
             var value = attrs['value'];
-            if (value === undefined || value === null || value === "") {
+            var optional = attrs['optional'] || false;
+            if (!optional && (value === undefined || value === null || value === "")) {
                 return "Please submit an answer to this question.";
             }
         }

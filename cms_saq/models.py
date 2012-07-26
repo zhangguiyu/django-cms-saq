@@ -39,6 +39,10 @@ class Question(CMSPlugin):
     label = models.CharField(max_length=255, blank=True)
     help_text = models.CharField(max_length=255, blank=True)
     question_type = models.CharField(max_length=1, choices=QUESTION_TYPES)
+    optional = models.BooleanField(
+        default=False,
+        help_text="Only applies to free text questions",
+    )
 
     def score(self, answers):
         if self.question_type == 'F':
