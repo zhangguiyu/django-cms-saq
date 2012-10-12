@@ -6,7 +6,7 @@ from cms.plugin_base import CMSPluginBase
 from cms.plugin_pool import plugin_pool
 
 from cms_saq.models import Question, Answer, GroupedAnswer, Submission, \
-        FormNav, SectionedScoring, ScoreSection
+        FormNav, ProgressBar, SectionedScoring, ScoreSection
 
 class AnswerAdmin(admin.StackedInline):
     model = Answer
@@ -121,6 +121,21 @@ class SectionedScoringPlugin(CMSPluginBase):
         })
         return context
 
+class ProgressBarPlugin(CMSPluginBase):
+    model = ProgressBar
+    name = "Progress Bar"
+    module = "SAQ"
+    render_template = "cms_saq/progress_bar.html"
+
+    def render(self, context, instance, placeholder):
+        answered, total = instance.progress_for_user(context['request'].user)
+        context.update({
+            'answered': answered,
+            'total': total,
+            'progress': float(answered) / float(total) * 100,
+        })
+        return context
+
 plugin_pool.register_plugin(SingleChoiceQuestionPlugin)
 plugin_pool.register_plugin(MultiChoiceQuestionPlugin)
 plugin_pool.register_plugin(DropDownQuestionPlugin)
@@ -128,4 +143,5 @@ plugin_pool.register_plugin(GroupedDropDownQuestionPlugin)
 plugin_pool.register_plugin(FreeTextQuestionPlugin)
 plugin_pool.register_plugin(FormNavPlugin)
 plugin_pool.register_plugin(SectionedScoringPlugin)
+plugin_pool.register_plugin(ProgressBarPlugin)
 

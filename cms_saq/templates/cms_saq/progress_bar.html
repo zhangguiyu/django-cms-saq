@@ -1,0 +1,11 @@
+{% load cms_tags sekizai_tags %}
+<div class="saq-progress">
+    <div class="saq-progress-label">
+        Progress: {{ answered }} / {{ total }}
+        ({{ progress|floatformat:"-0" }}%)
+    </div>
+    <div class="saq-progress-bar progress">
+        <div class="bar" style="width: {{ progress|floatformat:"-0" }}%"></div>
+    </div>
+</div>
+{# vim:set filetype=htmldjango: #}

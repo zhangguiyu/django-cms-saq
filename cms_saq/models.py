@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Max, Sum
 
-from cms.models import CMSPlugin
+from cms.models import CMSPlugin, Placeholder
 from cms.models.fields import PageField
 from taggit.managers import TaggableManager
 
@@ -120,6 +120,25 @@ class ScoreSection(models.Model):
 
     def score_for_user(self, user):
         return aggregate_score_for_user_by_tags(user, [self.tag])
+
+
+class ProgressBar(CMSPlugin):
+    count_optional = models.BooleanField(default=False)
+
+    def progress_for_user(self, user):
+        qs = Question.objects
+        if not self.count_optional:
+            qs = qs.filter(optional=False)
+
+        tree = self.page.get_root().get_descendants()
+
+        placeholders = Placeholder.objects.filter(page__in=tree)
+        subs = Submission.objects.filter(user=user).values_list('question', flat=True)
+
+        questions = qs.filter(placeholder__in=placeholders)
+        answered = questions.filter(slug__in=subs)
+
+        return (answered.count(), questions.count())
 
 
 def aggregate_score_for_user_by_tags(user, tags):
