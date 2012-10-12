@@ -87,6 +87,14 @@ This is a simple analysis plugin.  It displays aggregate total scores for
 questions grouped by tags.  Scores are displayed as percentages of the
 maximum score available for each group.
 
+### Progress Bar
+
+This simply adds a progress bar to any page that is part of the questionnaire.
+It displays the number of answered questions out of the total available in the
+entire tree. You can also filter out optional questions to show progress on
+required questions only (though this won't count answers to optional questions,
+so might be misleading).
+
 ## Adding your own analysis -- how to access user submissions
 
 Each user submission is stored in a `cms_saq.models.Submission` object, which
