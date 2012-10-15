@@ -48,13 +48,13 @@ class SingleChoiceQuestionPlugin(QuestionPlugin):
     name = "Single Choice Question"
     render_template = "cms_saq/single_choice_question.html"
     question_type = "S"
-    exclude = ('question_type', 'label', 'help_text')
+    exclude = ('question_type', 'help_text')
 
 class MultiChoiceQuestionPlugin(QuestionPlugin):
     name = "Multi Choice Question"
     render_template = "cms_saq/multi_choice_question.html"
     question_type = "M"
-    exclude = ('question_type', 'label', 'help_text')
+    exclude = ('question_type', 'help_text')
 
 class DropDownQuestionPlugin(QuestionPlugin):
     name = "Drop-down Question"

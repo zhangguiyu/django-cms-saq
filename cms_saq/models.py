@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Max, Sum
 
-from cms.models import CMSPlugin, Placeholder
+from cms.models import CMSPlugin, Page, Placeholder
 from cms.models.fields import PageField
 from taggit.managers import TaggableManager
 
@@ -43,6 +43,19 @@ class Question(CMSPlugin):
         default=False,
         help_text="Only applies to free text questions",
     )
+
+    @staticmethod
+    def all_in_tree(page):
+        root = page.get_root()
+        # Remember that there might be questions on the root page as well!
+        tree = root.get_descendants() | Page.objects.filter(id=root.id)
+        placeholders = Placeholder.objects.filter(page__in=tree)
+        return Question.objects.filter(placeholder__in=placeholders)
+
+    @staticmethod
+    def all_in_page(page):
+        placeholders = Placeholder.objects.filter(page=page)
+        return Question.objects.filter(placeholder__in=placeholders)
 
     def score(self, answers):
         if self.question_type == 'F':
@@ -126,19 +139,27 @@ class ProgressBar(CMSPlugin):
     count_optional = models.BooleanField(default=False)
 
     def progress_for_user(self, user):
-        qs = Question.objects
-        if not self.count_optional:
-            qs = qs.filter(optional=False)
-
-        tree = self.page.get_root().get_descendants()
-
-        placeholders = Placeholder.objects.filter(page__in=tree)
         subs = Submission.objects.filter(user=user).values_list('question', flat=True)
+        questions = Question.all_in_tree(self.page)
 
-        questions = qs.filter(placeholder__in=placeholders)
+        if not self.count_optional:
+            questions = questions.filter(optional=False)
+
         answered = questions.filter(slug__in=subs)
 
         return (answered.count(), questions.count())
+
+
+def aggregate_score_for_user_by_questions(user, questions):
+    scores = []
+    for question in questions:
+        score = question.percent_score_for_user(user)
+        if score is not None:
+            scores.append(score)
+    if len(scores):
+        return sum(scores) / len(scores)
+    else:
+        return 0
 
 
 def aggregate_score_for_user_by_tags(user, tags):

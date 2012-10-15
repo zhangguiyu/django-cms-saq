@@ -19,6 +19,13 @@
 </script>
 {% endaddtoblock %}
 
+<div>
+{% if question.label %}
+<div>
+    <label class="saq-question-label" for="saq-question-multi-{{ question.slug }}">{{ question.label }}</label>
+    <span class="saq-question-help-text">{{ question.help_text }}</span>
+</div>
+{% endif %}
 <ul class="saq-question saq-question-multi" id="saq-question-multi-{{ question.slug }}">
     <li class="saq-question-error"></li>
     {% for answer in answers %}
@@ -33,4 +40,5 @@
     </li>
     {% endfor %}
 </ul>
+</div>
 {# vim: set filetype=htmldjango: #}
