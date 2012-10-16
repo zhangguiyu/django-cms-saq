@@ -6,7 +6,7 @@ from cms.plugin_base import CMSPluginBase
 from cms.plugin_pool import plugin_pool
 
 from cms_saq.models import Question, Answer, GroupedAnswer, Submission, \
-        FormNav, ProgressBar, SectionedScoring, ScoreSection
+        FormNav, ProgressBar, SectionedScoring, ScoreSection, BulkAnswer
 
 class AnswerAdmin(admin.StackedInline):
     model = Answer
@@ -136,6 +136,16 @@ class ProgressBarPlugin(CMSPluginBase):
         })
         return context
 
+class BulkAnswerPlugin(CMSPluginBase):
+    model = BulkAnswer
+    name = "Bulk Answer"
+    module = "SAQ"
+    render_template = "cms_saq/bulk_answer.html"
+
+    def render(self, context, instance, placeholder):
+        context['instance'] = instance
+        return context
+
 plugin_pool.register_plugin(SingleChoiceQuestionPlugin)
 plugin_pool.register_plugin(MultiChoiceQuestionPlugin)
 plugin_pool.register_plugin(DropDownQuestionPlugin)
@@ -144,4 +154,5 @@ plugin_pool.register_plugin(FreeTextQuestionPlugin)
 plugin_pool.register_plugin(FormNavPlugin)
 plugin_pool.register_plugin(SectionedScoringPlugin)
 plugin_pool.register_plugin(ProgressBarPlugin)
+plugin_pool.register_plugin(BulkAnswerPlugin)
 

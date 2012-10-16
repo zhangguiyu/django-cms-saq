@@ -42,6 +42,9 @@ $(function () {
             SAQ.on('submit:end', function () {
                 self.$('input, select').removeAttr('disabled');
             });
+            SAQ.on('input:changed', function() {
+                self.changeValue();
+            });
             this.changeValue();
         },
         changeValue: function () {
@@ -154,6 +157,29 @@ $(function () {
             this.$('.saq-ticker').css('visibility', 'hidden');
             this.submitting = false;
         }
+    });
+
+    SAQ.BulkAnswer = Backbone.View.extend({
+        events: {
+            'click .saq-bulk-answer': 'markAnswers'
+        },
+        markAnswers: function (e) {
+            // For every single-choice question with the given answer available
+            // as an answer, mark the answer appropriately.
+            $('.saq-question-single input[value=' + this.options.answerValue + ']').each(function(i, elt) {
+                $(elt).click();
+            });
+            SAQ.trigger('input:changed');
+            
+            // If we have some prev/next buttons on the page, scroll there so
+            // we can proceed post-update (we don't auto-advance).
+            if ($('div.saq-form-nav')) {
+                $('html, body').animate({
+                    scrollTop: $("div.saq-form-nav").offset().top
+                }, 2000);
+            }
+            return false;
+        },
     });
     window.SAQ = SAQ;
 });

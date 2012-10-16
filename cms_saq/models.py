@@ -150,6 +150,14 @@ class ProgressBar(CMSPlugin):
         return (answered.count(), questions.count())
 
 
+class BulkAnswer(CMSPlugin):
+    """Answer all questions on the current page with a given value."""
+    answer_value = models.CharField(max_length=255)
+    label = models.CharField(
+        max_length=255, help_text="e.g.: 'mark all as not applicable'",
+    )
+
+
 def aggregate_score_for_user_by_questions(user, questions):
     scores = []
     for question in questions:

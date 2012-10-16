@@ -95,6 +95,13 @@ entire tree. You can also filter out optional questions to show progress on
 required questions only (though this won't count answers to optional questions,
 so might be misleading).
 
+### Bulk Answer
+
+Useful for 'skip this section' type functionality, this allows the insertion of
+a button into the page that marks all single-choice questions with a given
+answer. It only works on questions where the given answer value is one of the
+options and disregards any other user input.
+
 ## Adding your own analysis -- how to access user submissions
 
 Each user submission is stored in a `cms_saq.models.Submission` object, which

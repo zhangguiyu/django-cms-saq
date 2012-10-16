@@ -1,0 +1,19 @@
+{% load cms_tags sekizai_tags %}
+
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/backbone-0.9.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/saq.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}
+<script type="text/javascript">
+    $(function () {
+        SAQ.bulkAnswer = new SAQ.BulkAnswer({
+            el: $('#saq-bulk-answer-{{ instance.pk }}')[0],
+            answerValue: '{{ instance.answer_value }}'
+        });
+    });
+</script>
+{% endaddtoblock %}
+
+<div id="saq-bulk-answer-{{ instance.pk }}">
+    <a class="saq-bulk-answer" href="#">{{ instance.label }}</a>
+</div>
+{# vim:set filetype=htmldjango: #}
