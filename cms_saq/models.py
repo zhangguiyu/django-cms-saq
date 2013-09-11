@@ -16,7 +16,7 @@ class Answer(models.Model):
     is_default = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ('order', 'slug')
+        ordering = ('question', 'order', 'slug')
         unique_together = (('question', 'slug'),)
 
     def __unicode__(self):
