@@ -26,6 +26,12 @@
     <span class="saq-ticker"></span>
     {% endif %}
     {% if met_end_condition and instance.end_page %}
+    {% if instance.submission_set_tag and instance.end_submission_set %}
+    <form class="saq-end-button-data">
+        <input class="saq-end-button-data" hidden value="{{ instance.end_submission_set }}" name="end_submission_set"></input>
+        <input class="saq-end-button-data" hidden value="{{ instance.submission_set_tag }}" name="submission_set_tag"></input>
+    </form>
+    {% endif %}
     <a class="saq-end-button" href="#">{{ instance.end_page_label|default:"Analysis" }}</a>
     {% endif %}
     {% csrf_token %}

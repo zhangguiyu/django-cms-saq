@@ -20,6 +20,16 @@
     is_superuser: false
     is_staff: false
     is_active: true
+- model: cms_saq.SubmissionSet
+  pk: 1
+  fields:
+    slug: 'default'
+    user: 1
+- model: cms_saq.SubmissionSet
+  pk: 2
+  fields:
+    slug: 'default'
+    user: 1
 - model: cms_saq.Submission
   pk: 1
   fields:
@@ -27,6 +37,7 @@
     answer: red
     user: 1
     score: 10
+    submission_set: 1
 - model: cms_saq.Submission
   pk: 2
   fields:
@@ -34,6 +45,7 @@
     answer: football
     user: 1
     score: 40
+    submission_set: 2
 - model: cms_saq.Submission
   pk: 3
   fields:
@@ -41,6 +53,7 @@
     answer: football,rugby,cricket
     user: 1
     score: 350
+    submission_set: 1
 - model: cms_saq.Submission
   pk: 4
   fields:
@@ -48,6 +61,7 @@
     answer: blue
     user: 2
     score: 30
+    submission_set: 1
 - model: cms_saq.Submission
   pk: 5
   fields:
@@ -55,6 +69,7 @@
     answer: cricket
     user: 2
     score: 60
+    submission_set: 2
 - model: cms_saq.Submission
   pk: 6
   fields:
@@ -62,3 +77,4 @@
     answer: McLaren
     user: 2
     score: 0
+    submission_set: 1

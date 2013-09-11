@@ -122,9 +122,16 @@ $(function () {
                 this.submitting = true;
                 this.$('.saq-ticker').css('visibility', 'visible');
                 SAQ.trigger('submit:start');
+
+                data = SAQ.questions.asMap();
+                end_data = this.$('form.saq-end-button-data').serializeArray();
+                $.each(end_data, function(idx, item){
+                    data[item['name']] = item['value'];
+                });
+
                 $.ajax({
                     url: this.options.submitUrl,
-                    data: SAQ.questions.asMap(),
+                    data: data,
                     type: 'POST',
                     error: function () { self.onSubmitError(); },
                     success: function () {

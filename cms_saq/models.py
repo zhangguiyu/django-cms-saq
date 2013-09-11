@@ -13,12 +13,14 @@ class Answer(models.Model):
     order = models.IntegerField(default=0)
     question = models.ForeignKey('cms_saq.Question', related_name="answers")
 
+    is_default = models.BooleanField(default=False)
+
     class Meta:
         ordering = ('order', 'slug')
-        unique_together = ('question', 'slug')
+        unique_together = (('question', 'slug'),)
 
     def __unicode__(self):
-        return u"%s" % self.title
+        return u"%s: %s" % (self.question.slug, self.title)
 
 class GroupedAnswer(Answer):
     group = models.CharField(max_length=255)
@@ -43,6 +45,8 @@ class Question(CMSPlugin):
         default=False,
         help_text="Only applies to free text questions",
     )
+
+    depends_on_answer = models.ForeignKey(Answer, null=True, blank=True, related_name='trigger_questions')
 
     @staticmethod
     def all_in_tree(page):
@@ -80,7 +84,10 @@ class Question(CMSPlugin):
     def percent_score_for_user(self, user):
         if self.max_score:
             try:
-                score = Submission.objects.get(question=self.slug, user=user).score
+                score = Submission.objects.get(
+                    question=self.slug,
+                    user=user,
+                ).score
             except Submission.DoesNotExist:
                 return 0
             return 100.0 * score / self.max_score
@@ -90,21 +97,32 @@ class Question(CMSPlugin):
     def __unicode__(self):
         return self.slug
 
+class SubmissionSet(models.Model):
+    """ A set of submissions stored and associated with a particular user to
+        provide a mechanism through which a single user can provide repeated
+        sets of answers to the same questionnaire.
+    """
+    slug = models.SlugField(blank=True)
+    user = models.ForeignKey('auth.User', related_name='saq_submissions_sets')
+
+
 class Submission(models.Model):
     question = models.SlugField()
     answer = models.TextField(blank=True)
     score = models.IntegerField()
     user = models.ForeignKey('auth.User', related_name='saq_submissions')
 
+    submission_set = models.ForeignKey(SubmissionSet, related_name='submissions', null=True)
+
     class Meta:
-        ordering = ('user', 'question')
-        unique_together = ('question', 'user')
+        ordering = ('submission_set', 'user', 'question')
+        unique_together = ('question', 'user', 'submission_set')
 
     def answer_list(self):
         return self.answer.split(",")
 
     def __unicode__(self):
-        return u"%s answer to %s" % (self.user, self.question)
+        return u"%s answer to %s (%s)" % (self.user, self.question, self.submission_set.slug if self.submission_set else "default")
 
 class FormNav(CMSPlugin):
     next_page = PageField(blank=True, null=True, related_name="formnav_nexts")
@@ -114,6 +132,18 @@ class FormNav(CMSPlugin):
     end_page = PageField(blank=True, null=True, related_name="formnav_ends")
     end_page_label = models.CharField(max_length=255, blank=True, null=True)
     end_page_condition_question = models.ForeignKey(Question, null=True, blank=True)
+
+    end_submission_set = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=  "On submit, create a submission set from all "\
+                    "submissions with the submision set tag name."\
+                    " All sets created will be unique, if the given set name "\
+                    " exists, a numeric postfix will be added. "
+    )
+
+    submission_set_tag = models.CharField(max_length=255, blank=True, null=True)
 
 
 class SectionedScoring(CMSPlugin):

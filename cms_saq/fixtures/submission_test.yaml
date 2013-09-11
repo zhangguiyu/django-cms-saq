@@ -7,6 +7,7 @@
     lft: 0
     rght: 0
     tree_id: 0
+    changed_date: '2013-01-01'
 - model: cms_saq.Question
   pk: 1
   fields:
@@ -42,6 +43,7 @@
     lft: 0
     rght: 0
     tree_id: 0
+    changed_date: '2013-01-01'
 - model: cms_saq.Question
   pk: 2
   fields:
@@ -77,6 +79,7 @@
     lft: 0
     rght: 0
     tree_id: 0
+    changed_date: '2013-01-01'
 - model: cms_saq.Question
   pk: 3
   fields:
@@ -112,6 +115,7 @@
     lft: 0
     rght: 0
     tree_id: 0
+    changed_date: '2013-01-01'
 - model: cms_saq.Question
   pk: 4
   fields:

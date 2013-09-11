@@ -28,21 +28,51 @@ class QuestionPlugin(CMSPluginBase):
 
     def render(self, context, instance, placeholder):
         user = context['request'].user
+
+        submission_set = None
+
+        triggered = True
+        if instance.depends_on_answer:
+            try:
+                Submission.objects.get(
+                    user=user,
+                    question= instance.depends_on_answer.question.slug,
+                    answer = instance.depends_on_answer.slug,
+                    submission_set=submission_set,
+                )
+                triggered = True
+            except:
+                triggered = False
+
         extra = {
             'question': instance,
-            'answers': instance.answers.all()
+            'answers': instance.answers.all(),
+            'triggered': triggered
         }
+
         if user.is_authenticated():
             try:
-                extra['submission'] = Submission.objects.get(user=user, question=instance.slug)
+                extra['submission'] = Submission.objects.get(
+                    user=user,
+                    question=instance.slug,
+                    submission_set = submission_set
+                )
             except Submission.DoesNotExist:
                 pass
+
         context.update(extra)
         return context
 
     def save_model(self, request, obj, form, change):
         obj.question_type = self.question_type
         super(QuestionPlugin, self).save_model(request, obj, form, change)
+
+
+class SessionDefinition(QuestionPlugin):
+    name = "Session Definition"
+    render_template = "cms_saq/single_choice_question.html"
+    question_type = "S"
+    exclude = ('question_type', 'help_text')
 
 class SingleChoiceQuestionPlugin(QuestionPlugin):
     name = "Single Choice Question"
@@ -90,6 +120,7 @@ class FormNavPlugin(CMSPluginBase):
 
     def render(self, context, instance, placeholder):
         met_end_condition = False
+
         if instance.end_page_condition_question:
             end_condition_slug = instance.end_page_condition_question.slug
             met_end_condition = (Submission.objects
@@ -97,7 +128,7 @@ class FormNavPlugin(CMSPluginBase):
                 .count()) > 0
         context.update({
             'instance': instance,
-            'met_end_condition': met_end_condition
+            'met_end_condition': met_end_condition,
         })
         return context
 
@@ -155,4 +186,5 @@ plugin_pool.register_plugin(FormNavPlugin)
 plugin_pool.register_plugin(SectionedScoringPlugin)
 plugin_pool.register_plugin(ProgressBarPlugin)
 plugin_pool.register_plugin(BulkAnswerPlugin)
+plugin_pool.register_plugin(SessionDefinition)
 

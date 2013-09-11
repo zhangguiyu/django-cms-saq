@@ -6,6 +6,7 @@
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/saq.js"></script>{% endaddtoblock %}
 {% addtoblock "js" %}
 <script type="text/javascript">
+    {% if triggered %}
     $(function () {
         var model = new SAQ.Question({
             slug: '{{ question.slug }}'
@@ -16,9 +17,12 @@
         });
         SAQ.questions.add(model);
     });
+    {% endif %}
+
 </script>
 {% endaddtoblock %}
 
+{% if triggered %}
 <div>
 {% if question.label %}
 <div>
@@ -41,4 +45,6 @@
     {% endfor %}
 </ul>
 </div>
+{% endif %}
+
 {# vim: set filetype=htmldjango: #}
