@@ -6,6 +6,7 @@
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/json2.js"></script>{% endaddtoblock %}
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/backbone-0.9.1.min.js"></script>{% endaddtoblock %}
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/saq.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.numeric.js"></script>{% endaddtoblock %}
 {% addtoblock "js" %}
 <script type="text/javascript">
     $(function () {
@@ -18,6 +19,8 @@
             model: model
         });
         SAQ.questions.add(model);
+
+        $('input.numeric').numeric();
     });
 </script>
 {% endaddtoblock %}
@@ -35,7 +38,7 @@
 {% endif %}
 <div id="saq-question-free-{{ question.slug }}">
 <div class="saq-question-error"></div>
-<input class="saq-question saq-question-free" type="text" value="{{ submission.answer }}">
+<input class="saq-question saq-question-free {% if numeric %} numeric {% endif %}" type="text" value="{{ submission.answer }}">
 </div>
 </div>
 {% endif %}

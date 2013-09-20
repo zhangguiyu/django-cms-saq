@@ -115,6 +115,14 @@ class FreeTextQuestionPlugin(QuestionPlugin):
     inlines = []
     question_type = "F"
 
+class FreeNumberQuestionPlugin(FreeTextQuestionPlugin):
+    name = "Free Number Question"
+
+    def render(self, context, instance, placeholder):
+        context = super(FreeNumberQuestionPlugin, self).render(context, instance, placeholder)
+        context['numeric'] = True
+        return context
+
 class FormNavPlugin(CMSPluginBase):
     model = FormNav
     name = "Back / Next Buttons"
@@ -185,6 +193,7 @@ plugin_pool.register_plugin(MultiChoiceQuestionPlugin)
 plugin_pool.register_plugin(DropDownQuestionPlugin)
 plugin_pool.register_plugin(GroupedDropDownQuestionPlugin)
 plugin_pool.register_plugin(FreeTextQuestionPlugin)
+plugin_pool.register_plugin(FreeNumberQuestionPlugin)
 plugin_pool.register_plugin(FormNavPlugin)
 plugin_pool.register_plugin(SectionedScoringPlugin)
 plugin_pool.register_plugin(ProgressBarPlugin)
