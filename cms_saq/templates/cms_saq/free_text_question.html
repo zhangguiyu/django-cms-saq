@@ -23,9 +23,9 @@
 {% endaddtoblock %}
 
 {% if triggered %}
-    <div class="saq-question-container">
+    <div class="saq-question-container {{ question.slug }}-container saq-question-free-container">
 {% else %}
-    <div class="saq-question-container hidden-question" style="display:none;" data-dependency="{{ depends_on }}">
+    <div class="saq-question-container {{ question.slug }}-container saq-question-free-container hidden-question" style="display:none;" data-dependency="{{ depends_on }}">
 {% endif %}
 {% if question.label %}
 <div>
