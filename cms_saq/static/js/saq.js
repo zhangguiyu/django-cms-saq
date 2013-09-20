@@ -15,7 +15,8 @@ $(function () {
         postValidate: function (attrs) {
             var value = attrs['value'];
             var optional = attrs['optional'] || false;
-            if (!optional && (value === undefined || value === null || value === "")) {
+            var disabled = attrs['disabled'] || false;
+            if (!optional && (value === undefined || value === null || value === "") && !disabled) {
                 return "Please submit an answer to this question.";
             }
         }
@@ -23,7 +24,9 @@ $(function () {
 
     SAQ.QuestionView = Backbone.View.extend({
         events: {
-            'change': 'changeValue'
+            'change': '_changeValue',
+            'saq-disable': '_disable',
+            'saq-enable': '_enable',
         },
         defaults: {
             value: null
@@ -45,7 +48,38 @@ $(function () {
             SAQ.on('input:changed', function() {
                 self.changeValue();
             });
-            this.changeValue();
+            this._changeValue();
+        },
+        _disable: function(){
+            this.model.set('disabled', true);
+        },
+        _enable: function(){
+            this.model.set('disabled', false);
+        },
+        _changeValue: function (ev) {
+
+            // Defer to overwritten changeValue
+            this.changeValue(ev);
+
+            // On any answer change, check our dependent questions
+            $.each($('div[data-dependency]'), function(idx, qs){
+                dependency = $(qs).attr('data-dependency');
+                input = $('input:checked[id$=' + dependency + ']');
+                if(!input.length){
+                    if($(qs).is(':visible')){
+                        $(qs).slideUp();
+                        $(qs).find('.saq-question').trigger('saq-disable');
+                    }
+                    else{
+                        $(qs).hide();
+                        $(qs).find('.saq-question').trigger('saq-disable');
+                    }
+                }
+                else{
+                    $(qs).slideDown();
+                    $(qs).find('.saq-question').trigger('saq-enable');
+                }
+            });
         },
         changeValue: function () {
             // override in subclasses
@@ -145,7 +179,7 @@ $(function () {
                 });
             }
             else {
-                console.log("validation failed?");
+                //console.log("validation failed?");
             }
             return false;
         },

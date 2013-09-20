@@ -32,7 +32,9 @@ class QuestionPlugin(CMSPluginBase):
         submission_set = None
 
         triggered = True
+        depends_on = None
         if instance.depends_on_answer:
+            depends_on = instance.depends_on_answer.pk
             try:
                 Submission.objects.get(
                     user=user,
@@ -47,7 +49,8 @@ class QuestionPlugin(CMSPluginBase):
         extra = {
             'question': instance,
             'answers': instance.answers.all(),
-            'triggered': triggered
+            'triggered': triggered,
+            'depends_on': depends_on,
         }
 
         if user.is_authenticated():

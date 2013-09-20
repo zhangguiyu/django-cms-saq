@@ -22,7 +22,11 @@
 </script>
 {% endaddtoblock %}
 
-<div>
+{% if triggered %}
+    <div class="saq-question-container">
+{% else %}
+    <div class="saq-question-container hidden-question" style="display:none;" data-dependency="{{ depends_on }}">
+{% endif %}
 {% if question.label %}
 <div>
     <label class="saq-question-label" for="saq-question-free-{{ question.slug }}">{{ question.label }}</label>
