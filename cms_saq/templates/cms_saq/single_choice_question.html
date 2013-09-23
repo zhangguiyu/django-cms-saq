@@ -20,11 +20,10 @@
 {% endaddtoblock %}
 
 
-{% if triggered %}
-    <div class="saq-question-container saq-question-single-container {{ question.slug }}-container">
-{% else %}
-    <div class="saq-question-container hidden-question saq-question-single-container {{ question.slug }}-container" style="display:none;" data-dependency="{{ depends_on }}">
-{% endif %}
+<div class="saq-question-container saq-question-single-container {{ question.slug }}-container"
+{% if not triggered %} style="display:none;" {% endif %}
+{% if depends_on %} data-dependency="{{ depends_on }}" {% endif %}
+>
 {% if question.label %}
 <div>
     <label class="saq-question-label" for="saq-question-single-{{ question.slug }}">{{ question.label }}</label>

@@ -23,11 +23,10 @@
 </script>
 {% endaddtoblock %}
 
-{% if triggered %}
-    <div class="saq-question-container {{ question.slug }}-container saq-question-free-container">
-{% else %}
-    <div class="saq-question-container {{ question.slug }}-container saq-question-free-container hidden-question" style="display:none;" data-dependency="{{ depends_on }}">
-{% endif %}
+<div class="saq-question-container {{ question.slug }}-container saq-question-free-container"
+{% if not triggered %} style="display:none;" {% endif %}
+{% if depends_on %} data-dependency="{{ depends_on }}" {% endif %}
+>
 {% if question.label %}
 <div>
     <label class="saq-question-label" for="saq-question-free-{{ question.slug }}">{{ question.label }}</label>
