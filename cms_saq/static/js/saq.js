@@ -64,6 +64,10 @@ $(function () {
             // On any answer change, check our dependent questions
             $.each($('div[data-dependency]'), function(idx, qs){
                 dependency = $(qs).attr('data-dependency');
+
+                if(!$('input:[id$=' + dependency + ']').length)
+                    return;
+
                 input = $('input:checked[id$=' + dependency + ']');
                 if(!input.length){
                     if($(qs).is(':visible')){
