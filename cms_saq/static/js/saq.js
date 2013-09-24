@@ -135,7 +135,10 @@ $(function () {
         },
         asMap: function () {
             return SAQ.questions.reduce(function (data, model) {
-                data[model.get('slug')] = model.get('value');
+                value = model.get('value');
+                if(!value)
+                    return data;
+                data[model.get('slug')] = value
                 return data;
             }, {});
         }
