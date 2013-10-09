@@ -1,13 +1,14 @@
 {% load cms_tags sekizai_tags %}
+{% load i18n %}
 <div class="saq-sectioned-scoring">
     {% for label, score in scores %}
     <div class="saq-section-score">
-        <div class="saq-section-score-label">{{ label }}</div>
+        <div class="saq-section-score-label">{% trans label %}</div>
         <div class="saq-section-score-score">{{ score|floatformat:"-0" }} / 100</div>
     </div>
     {% endfor %}
     <div class="saq-overall-score">
-        <div class="saq-overall-score-label">Overall</div>
+        <div class="saq-overall-score-label">{% trans "Overall" %}</div>
         <div class="saq-overall-score-score">{{ overall|floatformat:"-0" }} / 100</div>
     </div>
 </div>

@@ -1,4 +1,5 @@
 {% load sekizai_tags markup %}
+{% load i18n %}
 
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/underscore-1.3.1.min.js"></script>{% endaddtoblock %}
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/json2.js"></script>{% endaddtoblock %}
@@ -26,8 +27,8 @@
 >
 {% if question.label %}
 <div>
-    <label class="saq-question-label" for="saq-question-single-{{ question.slug }}">{{ question.label }}</label>
-    <span class="saq-question-help-text">{{ question.help_text }}</span>
+    <label class="saq-question-label" for="saq-question-single-{{ question.slug }}">{% trans question.label %}</label>
+    <span class="saq-question-help-text">{% trans question.help_text %}</span>
 </div>
 {% endif %}
 <ul class="saq-question saq-question-single" id="saq-question-single-{{ question.slug }}">
@@ -36,7 +37,7 @@
     <li class='saq-answer saq-answer-single'>
         <input type="radio" id="saq-answer-single-{{ answer.pk }}" name="{{ question.slug }}" value="{{ answer.slug }}" {% if submission and answer.slug == submission.answer %}checked{% endif %}>
         <label for="saq-answer-single-{{ answer.pk }}">
-            <div class="saq-answer-title">{{ answer.title }}</div>
+            <div class="saq-answer-title">{% trans answer.title %}</div>
             <div class="saq-answer-help-text">
                 {{ answer.help_text|markdown }}
             </div>

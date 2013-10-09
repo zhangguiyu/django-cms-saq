@@ -1,4 +1,5 @@
 {% load cms_tags sekizai_tags %}
+{% load i18n %}
 
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/underscore-1.3.1.min.js"></script>{% endaddtoblock %}
 {% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/json2.js"></script>{% endaddtoblock %}
@@ -16,6 +17,6 @@
 {% endaddtoblock %}
 
 <div id="saq-bulk-answer-{{ instance.pk }}">
-    <a class="saq-bulk-answer" href="#">{{ instance.label }}</a>
+    <a class="saq-bulk-answer" href="#">{% trans instance.label %}</a>
 </div>
 {# vim:set filetype=htmldjango: #}
