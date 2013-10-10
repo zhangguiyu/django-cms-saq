@@ -35,8 +35,7 @@ class Question(CMSPlugin):
         ('F', 'Free-text question'),
     ]
 
-    slug = models.SlugField(unique=True,
-            help_text="A unique slug for identifying answers to this specific question")
+    slug = models.SlugField(help_text="A slug for identifying answers to this specific question (allows multiple only for multiple languages)")
     tags = TaggableManager(blank=True)
     label = models.CharField(max_length=255, blank=True)
     help_text = models.CharField(max_length=255, blank=True)
@@ -187,7 +186,6 @@ class BulkAnswer(CMSPlugin):
         max_length=255, help_text="e.g.: 'mark all as not applicable'",
     )
 
-
 def aggregate_score_for_user_by_questions(user, questions):
     scores = []
     for question in questions:
@@ -211,4 +209,5 @@ def aggregate_score_for_user_by_tags(user, tags):
         return sum(scores) / len(scores)
     else:
         return 0
+
 

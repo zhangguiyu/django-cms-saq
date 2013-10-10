@@ -27,7 +27,7 @@
 {% if question.label %}
 <div>
     <label class="saq-question-label" for="saq-question-multi-{{ question.slug }}">{% trans question.label %}</label>
-    <span class="saq-question-help-text">{% trans question.help_text %}</span>
+    <span class="saq-question-help-text">{% if question.help_text %}{% trans question.help_text %}{% endif %}</span>
 </div>
 {% endif %}
 <ul class="saq-question saq-question-multi" id="saq-question-multi-{{ question.slug }}">
@@ -38,7 +38,7 @@
         <label for="saq-answer-multi-{{ answer.pk }}">
             <div class="saq-answer-title">{% trans answer.title %}</div>
             <div class="saq-answer-help-text">
-                {% trans answer.help_text|markdown %}
+                {% if answer.help_text %}{% trans answer.help_text|markdown %}{% endif %}
             </div>
         </label>
     </li>

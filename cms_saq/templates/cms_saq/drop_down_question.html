@@ -27,7 +27,7 @@
 {% if question.label %}
 <div>
     <label class="saq-question-label" for="saq-question-drop-{{ question.slug }}">{% trans question.label %}</label>
-    <span class="saq-question-help-text">{% trans question.help_text %}</span>
+    <span class="saq-question-help-text">{% if question.help_text %}{% trans question.help_text %}{% endif %}</span>
 </div>
 {% endif %}
 <div id="saq-question-drop-{{ question.slug }}">

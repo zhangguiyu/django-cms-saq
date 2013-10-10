@@ -1,12 +1,37 @@
 import itertools, operator
 
 from django.contrib import admin
+from django.utils.translation import ugettext as _
 
 from cms.plugin_base import CMSPluginBase
 from cms.plugin_pool import plugin_pool
 
 from cms_saq.models import Question, Answer, GroupedAnswer, Submission, \
         FormNav, ProgressBar, SectionedScoring, ScoreSection, BulkAnswer
+
+
+from cms.plugins.text.cms_plugins import TextPlugin
+from cms.plugins.text.models import Text
+
+from bs4 import BeautifulSoup
+
+class TranslatedTextPlugin(TextPlugin):
+    """ Text plugin that pushes every text string through i18n translations
+        when rendered.
+    """
+
+    model = Text
+    name = "TranslatedText"
+    render_template = "cms_saq/translated_text.html"
+
+    def render(self, context, instance, placeholder):
+        """ Over-ride render to use bs4 to break up strings in HTML
+        """
+        soup = BeautifulSoup(instance.body)
+        for string in list(soup.strings):
+            string.replace_with(_(unicode(string)))
+        context['translated'] = unicode(soup)
+        return context
 
 class AnswerAdmin(admin.StackedInline):
     model = Answer
@@ -199,4 +224,5 @@ plugin_pool.register_plugin(SectionedScoringPlugin)
 plugin_pool.register_plugin(ProgressBarPlugin)
 plugin_pool.register_plugin(BulkAnswerPlugin)
 plugin_pool.register_plugin(SessionDefinition)
+plugin_pool.register_plugin(TranslatedTextPlugin)
 
