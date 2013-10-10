@@ -6,10 +6,15 @@ import cms_saq
 
 version = cms_saq.__version__
 
+requires = [
+    'beautifulsoup4>=4.3.1'
+]
+
 setup(
     name='django-cms-saq',
     version=version,
     description='Self-assessment questionnaires with Django CMS.',
+    install_requires=requires,
     author='Maplecroft',
     author_email='james.rutherford@maplecroft.com',
     url='https://github.com/Maplecroft/django-cms-saq',
