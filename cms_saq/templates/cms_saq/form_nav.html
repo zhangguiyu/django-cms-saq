@@ -20,10 +20,10 @@
 
 <div id="saq-form-nav-{{ instance.pk }}" class="saq-form-nav">
     {% if instance.prev_page %}
-    <a class="saq-prev-button" href="{% page_url instance.prev_page %}">{% trans instance.prev_page_label|default:"Back" %}</a>
+    <a class="saq-prev-button" href="{% page_url instance.prev_page %}">{% if instance.prev_page_label %}{% trans instance.prev_page_label %}{% else %}{% trans "Back" %}{% endif %}</a>
     {% endif %}
     {% if instance.next_page %}
-    <a class="saq-next-button" href="#">{% trans instance.next_page_label|default:"Next" %}</a>
+    <a class="saq-next-button" href="#">{% if instance.next_page_label %}{% trans instance.next_page_label %}{% else %}{% trans "Next" %}{% endif %}</a>
     <span class="saq-ticker"></span>
     {% endif %}
     {% if met_end_condition and instance.end_page %}
@@ -33,7 +33,7 @@
         <input class="saq-end-button-data" hidden value="{{ instance.submission_set_tag }}" name="submission_set_tag"></input>
     </form>
     {% endif %}
-    <a class="saq-end-button" href="#">{% trans instance.end_page_label|default:"Analysis" %}</a>
+    <a class="saq-end-button" href="#">{% if instance.end_page_label %}{% trans instance.end_page_label %}{% else %}{% trans "Analysis" %}{% endif %}</a>
     {% endif %}
     {% csrf_token %}
 </div>
