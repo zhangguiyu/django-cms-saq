@@ -7,7 +7,8 @@ from cms.plugin_base import CMSPluginBase
 from cms.plugin_pool import plugin_pool
 
 from cms_saq.models import Question, Answer, GroupedAnswer, Submission, \
-        FormNav, ProgressBar, SectionedScoring, ScoreSection, BulkAnswer
+        FormNav, ProgressBar, SectionedScoring, ScoreSection, BulkAnswer, \
+        QuestionnaireText
 
 
 from cms.plugins.text.cms_plugins import TextPlugin
@@ -31,6 +32,43 @@ class TranslatedTextPlugin(TextPlugin):
         for string in list(soup.strings):
             string.replace_with(_(unicode(string)))
         context['translated'] = unicode(soup)
+        return context
+
+class QuestionnaireTextPlugin(TranslatedTextPlugin):
+    """ Questionnaire text dependent on answers
+    """
+    model = QuestionnaireText
+    render_template = "cms_saq/questionnaire_text.html"
+    module = "SAQ"
+    name = "QuestionnaireText"
+
+    def render(self, context, instance, placeholder):
+        context = super(QuestionnaireTextPlugin, self).render(context, instance, placeholder)
+        user = context['request'].user
+
+        triggered = True
+        depends_on = None
+        submission_set = None
+
+        if instance.depends_on_answer:
+            depends_on = instance.depends_on_answer.pk
+            try:
+                Submission.objects.get(
+                    user=user,
+                    question= instance.depends_on_answer.question.slug,
+                    answer = instance.depends_on_answer.slug,
+                    submission_set=submission_set,
+                )
+                triggered = True
+            except:
+                triggered = False
+
+        extra = {
+            'triggered': triggered,
+            'depends_on': depends_on,
+        }
+
+        context.update(extra)
         return context
 
 class AnswerAdmin(admin.StackedInline):
@@ -224,5 +262,7 @@ plugin_pool.register_plugin(SectionedScoringPlugin)
 plugin_pool.register_plugin(ProgressBarPlugin)
 plugin_pool.register_plugin(BulkAnswerPlugin)
 plugin_pool.register_plugin(SessionDefinition)
+plugin_pool.register_plugin(QuestionnaireTextPlugin)
 plugin_pool.register_plugin(TranslatedTextPlugin)
+
 

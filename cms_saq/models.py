@@ -5,6 +5,16 @@ from cms.models import CMSPlugin, Page, Placeholder
 from cms.models.fields import PageField
 from taggit.managers import TaggableManager
 
+from cms.plugins.text.models import AbstractText
+
+class QuestionnaireText(AbstractText):
+    """ Text plugin which, when rendered is translated
+        using django translations.  Also provides
+        means of making text dependent on SAQ answers.
+    """
+    depends_on_answer = models.ForeignKey('cms_saq.Answer', null=True, blank=True, related_name='trigger_text')
+
+
 class Answer(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField()
@@ -37,8 +47,8 @@ class Question(CMSPlugin):
 
     slug = models.SlugField(help_text="A slug for identifying answers to this specific question (allows multiple only for multiple languages)")
     tags = TaggableManager(blank=True)
-    label = models.CharField(max_length=255, blank=True)
-    help_text = models.CharField(max_length=255, blank=True)
+    label = models.CharField(max_length=512, blank=True)
+    help_text = models.CharField(max_length=512, blank=True)
     question_type = models.CharField(max_length=1, choices=QUESTION_TYPES)
     optional = models.BooleanField(
         default=False,
