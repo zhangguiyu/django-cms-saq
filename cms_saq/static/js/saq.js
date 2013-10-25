@@ -26,7 +26,7 @@ $(function () {
         events: {
             'change': '_changeValue',
             'saq-disable': '_disable',
-            'saq-enable': '_enable',
+            'saq-enable': '_enable'
         },
         defaults: {
             value: null
@@ -229,7 +229,7 @@ $(function () {
                 }, 2000);
             }
             return false;
-        },
+        }
     });
     window.SAQ = SAQ;
 });
