@@ -12,7 +12,7 @@
             el: $('#saq-form-nav-{{ instance.pk }}')[0],
             nextUrl: {% if instance.next_page %}'{% page_url instance.next_page %}'{% else %}null{% endif %},
             endUrl: {% if instance.end_page %}'{% page_url instance.end_page %}'{% else %}null{% endif %},
-            submitUrl: '{% url cms_saq_submit %}'
+            submitUrl: '{% url 'cms_saq_submit' %}'
         });
     });
 </script>
