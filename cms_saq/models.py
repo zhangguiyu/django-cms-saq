@@ -7,12 +7,14 @@ from taggit.managers import TaggableManager
 
 from cms.plugins.text.models import AbstractText
 
+
 class QuestionnaireText(AbstractText):
     """ Text plugin which, when rendered is translated
         using django translations.  Also provides
         means of making text dependent on SAQ answers.
     """
-    depends_on_answer = models.ForeignKey('cms_saq.Answer', null=True, blank=True, related_name='trigger_text')
+    depends_on_answer = models.ForeignKey(
+        'cms_saq.Answer', null=True, blank=True, related_name='trigger_text')
 
 
 class Answer(models.Model):
@@ -32,11 +34,13 @@ class Answer(models.Model):
     def __unicode__(self):
         return u"%s: %s" % (self.question.slug, self.title)
 
+
 class GroupedAnswer(Answer):
     group = models.CharField(max_length=255)
 
     class Meta:
         ordering = ('group', 'order', 'slug')
+
 
 class Question(CMSPlugin):
     QUESTION_TYPES = [
@@ -45,7 +49,9 @@ class Question(CMSPlugin):
         ('F', 'Free-text question'),
     ]
 
-    slug = models.SlugField(help_text="A slug for identifying answers to this specific question (allows multiple only for multiple languages)")
+    slug = models.SlugField(
+        help_text="A slug for identifying answers to this specific question "
+        "(allows multiple only for multiple languages)")
     tags = TaggableManager(blank=True)
     label = models.CharField(max_length=512, blank=True)
     help_text = models.CharField(max_length=512, blank=True)
@@ -55,7 +61,11 @@ class Question(CMSPlugin):
         help_text="Only applies to free text questions",
     )
 
-    depends_on_answer = models.ForeignKey(Answer, null=True, blank=True, related_name='trigger_questions')
+    depends_on_answer = models.ForeignKey(
+        Answer, null=True, blank=True, related_name='trigger_questions')
+
+    def copy_relations(self, oldinstance):
+        self.depends_on_answer = oldinstance.depends_on_answer
 
     @staticmethod
     def all_in_tree(page):
@@ -83,11 +93,13 @@ class Question(CMSPlugin):
     def max_score(self):
         if not hasattr(self, '_max_score'):
             if self.question_type == "S":
-                self._max_score = self.answers.aggregate(Max('score'))['score__max']
+                self._max_score = self.answers.aggregate(
+                    Max('score'))['score__max']
             elif self.question_type == "M":
-                self._max_score = self.answers.aggregate(Sum('score'))['score__sum']
+                self._max_score = self.answers.aggregate(
+                    Sum('score'))['score__sum']
             else:
-                self._max_score = None # don't score free-text answers
+                self._max_score = None  # don't score free-text answers
         return self._max_score
 
     def percent_score_for_user(self, user):
@@ -106,6 +118,7 @@ class Question(CMSPlugin):
     def __unicode__(self):
         return self.slug
 
+
 class SubmissionSet(models.Model):
     """ A set of submissions stored and associated with a particular user to
         provide a mechanism through which a single user can provide repeated
@@ -121,7 +134,8 @@ class Submission(models.Model):
     score = models.IntegerField()
     user = models.ForeignKey('auth.User', related_name='saq_submissions')
 
-    submission_set = models.ForeignKey(SubmissionSet, related_name='submissions', null=True)
+    submission_set = models.ForeignKey(
+        SubmissionSet, related_name='submissions', null=True)
 
     class Meta:
         ordering = ('submission_set', 'user', 'question')
@@ -131,7 +145,10 @@ class Submission(models.Model):
         return self.answer.split(",")
 
     def __unicode__(self):
-        return u"%s answer to %s (%s)" % (self.user, self.question, self.submission_set.slug if self.submission_set else "default")
+        return u"%s answer to %s (%s)" % (
+            self.user, self.question, self.submission_set.slug
+            if self.submission_set else "default")
+
 
 class FormNav(CMSPlugin):
     next_page = PageField(blank=True, null=True, related_name="formnav_nexts")
@@ -140,29 +157,37 @@ class FormNav(CMSPlugin):
     prev_page_label = models.CharField(max_length=255, blank=True, null=True)
     end_page = PageField(blank=True, null=True, related_name="formnav_ends")
     end_page_label = models.CharField(max_length=255, blank=True, null=True)
-    end_page_condition_question = models.ForeignKey(Question, null=True, blank=True)
+    end_page_condition_question = models.ForeignKey(
+        Question, null=True, blank=True)
 
     end_submission_set = models.CharField(
         max_length=255,
         blank=True,
         null=True,
-        help_text=  "On submit, create a submission set from all "\
-                    "submissions with the submision set tag name."\
-                    " All sets created will be unique, if the given set name "\
-                    " exists, a numeric postfix will be added. "
+        help_text="On submit, create a submission set from all "
+        "submissions with the submision set tag name."
+        " All sets created will be unique, if the given set name "
+        " exists, a numeric postfix will be added. "
     )
 
-    submission_set_tag = models.CharField(max_length=255, blank=True, null=True)
+    submission_set_tag = models.CharField(
+        max_length=255, blank=True, null=True)
 
 
 class SectionedScoring(CMSPlugin):
     def scores_for_user(self, user):
-        scores = [[s.label, s.score_for_user(user)] for s in self.sections.all()]
+        scores = [
+            [s.label, s.score_for_user(user)] for s in self.sections.all()]
         overall = sum([s[1] for s in scores]) / len(scores)
         return [scores, overall]
 
+    def copy_relations(self, oldinstance):
+        self.sections = oldinstance.sections.all()
+
+
 class ScoreSection(models.Model):
-    group = models.ForeignKey('cms_saq.SectionedScoring', related_name='sections')
+    group = models.ForeignKey(
+        'cms_saq.SectionedScoring', related_name='sections')
     label = models.CharField(max_length=255)
     tag = models.CharField(max_length=255)
     order = models.IntegerField()
@@ -178,7 +203,8 @@ class ProgressBar(CMSPlugin):
     count_optional = models.BooleanField(default=False)
 
     def progress_for_user(self, user):
-        subs = Submission.objects.filter(user=user).values_list('question', flat=True)
+        subs = Submission.objects.filter(
+            user=user).values_list('question', flat=True)
         questions = Question.all_in_tree(self.page)
 
         if not self.count_optional:
@@ -195,6 +221,7 @@ class BulkAnswer(CMSPlugin):
     label = models.CharField(
         max_length=255, help_text="e.g.: 'mark all as not applicable'",
     )
+
 
 def aggregate_score_for_user_by_questions(user, questions):
     scores = []
@@ -219,5 +246,3 @@ def aggregate_score_for_user_by_tags(user, tags):
         return sum(scores) / len(scores)
     else:
         return 0
-
-
