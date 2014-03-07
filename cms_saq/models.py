@@ -66,6 +66,32 @@ class Question(CMSPlugin):
 
     def copy_relations(self, oldinstance):
         self.depends_on_answer = oldinstance.depends_on_answer
+        for answer in oldinstance.answers.all():
+            oldpk = answer.pk
+            # handle if groupedAnswers by creating and saving a new groupedanswer
+            try:
+                ga = GroupedAnswer.objects.get(pk=oldpk)
+                print "[%d] ga = %s" % (oldpk, ga)
+                print "new answer pk = %d" % answer.pk
+                gp = ga.group 
+                print "group = %s" % gp
+
+                # to copy inherited objects, must set both id and pk to none
+                ga.pk = None
+                ga.id = None
+                ga.question = self
+                ga.save()
+
+                # the following Also WORKS!
+                #newga = GroupedAnswer.objects.create(question=self,pk=answer.pk,group=gp,title=answer.title)
+                #newga.save()
+                print "new ga = [%d] %s" % (ga.pk, ga)
+            except:
+                answer.pk = None
+                # copy into a new set of published answers by auto-assigning new pk
+                answer.question = self  # set new answers to new question instance
+                answer.save()
+                print "Not groupedAnswer, copying done." 
 
     @staticmethod
     def all_in_tree(page):
