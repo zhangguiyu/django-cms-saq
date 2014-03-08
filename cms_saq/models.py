@@ -1,3 +1,4 @@
+
 from django.db import models
 from django.db.models import Max, Sum
 
@@ -6,6 +7,9 @@ from cms.models.fields import PageField
 from taggit.managers import TaggableManager
 
 from cms.plugins.text.models import AbstractText
+
+# kuiyu multi-lingual
+from hvad.models import TranslatableModel, TranslatedFields
 
 
 class QuestionnaireText(AbstractText):
@@ -64,6 +68,16 @@ class Question(CMSPlugin):
     depends_on_answer = models.ForeignKey(
         Answer, null=True, blank=True, related_name='trigger_questions')
 
+    # kuiyu 2014.03.04 When a question is published, CMSPlugin creates
+    # a duplicate, i.e., there will be 2 copies of questions:
+    # one draft, one published
+    # The draft question have associated answers, but the published one 
+    # does not, so we copy over the answers associated to the draft over
+    # to the published question.
+    # A better design for next version is to associate the
+    # Question plugin to a virtual question, 
+    # which points to the set of answers. That way we don't need to have 2 versions
+    # of every answer, one draft, one published.
     def copy_relations(self, oldinstance):
         self.depends_on_answer = oldinstance.depends_on_answer
         for answer in oldinstance.answers.all():
@@ -76,7 +90,7 @@ class Question(CMSPlugin):
                 gp = ga.group 
                 print "group = %s" % gp
 
-                # to copy inherited objects, must set both id and pk to none
+                # to copy inherited objects, GroupedAnswer is one, must set both id and pk to none
                 ga.pk = None
                 ga.id = None
                 ga.question = self
@@ -91,7 +105,7 @@ class Question(CMSPlugin):
                 # copy into a new set of published answers by auto-assigning new pk
                 answer.question = self  # set new answers to new question instance
                 answer.save()
-                print "Not groupedAnswer, copying done." 
+                print "Not groupedAnswer, copying answers done." 
 
     @staticmethod
     def all_in_tree(page):
@@ -155,6 +169,7 @@ class SubmissionSet(models.Model):
 
 
 class Submission(models.Model):
+    # todo: add date
     question = models.SlugField()
     answer = models.TextField(blank=True)
     score = models.IntegerField()
