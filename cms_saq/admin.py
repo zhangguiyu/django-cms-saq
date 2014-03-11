@@ -6,9 +6,12 @@ from cms.admin.placeholderadmin import PlaceholderAdmin
 
 from cms_saq.models import *
 
+from django.utils.translation import ugettext as _
+
 from hvad.admin import TranslatableAdmin
+from hvad.forms import TranslatableModelForm
 
-
+#from parler.admin import TranslatableAdmin
 
 class QuestionnaireTextAdmin(admin.ModelAdmin):
 #    date_hierarchy = 'pub_date'
@@ -20,10 +23,46 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ('slug', 'label', 'question_type', 'optional', 'depends_on_answer')
 
 
-class AnswerAdmin(admin.ModelAdmin):
-    list_display = ('slug', 'title', 'help_text', 'score', 'order', 'is_default', 'question')
+class AnswerAdminForm(TranslatableModelForm):
+    class Meta:
+        model = Answer
 
-class GroupedAnswerAdmin(admin.ModelAdmin):
+    def clean_name(self):
+        print "------------------------title = %s" % title
+        # do something that validates your data
+        # return self.cleaned_data["name"]
+
+class AnswerAdmin(TranslatableAdmin):
+    model = Answer
+    extra = 0
+#    prepopulated_fields = {'slug': ('title',)} # fails for hvad 0.3
+    list_display = ('slug', '__unicode__', 'all_translations', 'score', 'order', 'is_default', 'question')
+
+    form = AnswerAdminForm
+
+    # hack because you cannot use the following
+    # prepopulated_fields = {'slug': ('title',)}
+    # see https://github.com/KristianOellegaard/django-hvad/issues/10
+    def __init__(self, *args, **kwargs):
+        super(AnswerAdmin, self).__init__(*args, **kwargs)
+        self.prepopulated_fields = {'slug': ('title',)}
+
+
+    # translatable fields cannot be in list_display unless you define your own
+    # as follows. See http://martinbrochhaus.com/hvad.html
+#    def get_title(self, obj):
+#        return obj.title
+#        get_title.short_description = _('Title')
+    def get_group(self, obj):
+        return obj.group
+        get_group.short_description = _('Group')
+    def get_helptext(self, obj):
+        return obj.help_text
+        get_helptext.short_description = _('Help Text')
+
+
+
+class GroupedAnswerAdmin(TranslatableAdmin):
     list_display = ('slug', 'title', 'help_text', 'score', 'order', 'is_default', 'question', 'group')
 
 class SubmissionSetAdmin(admin.ModelAdmin):

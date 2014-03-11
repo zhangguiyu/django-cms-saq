@@ -16,6 +16,11 @@ from cms.plugins.text.models import Text
 
 from bs4 import BeautifulSoup
 
+
+from hvad.admin import TranslatableStackedInline
+#from parler.admin import TranslatableStackedInline
+
+
 class TranslatedTextPlugin(TextPlugin):
     """ Text plugin that pushes every text string through i18n translations
         when rendered.
@@ -71,13 +76,26 @@ class QuestionnaireTextPlugin(TranslatedTextPlugin):
         context.update(extra)
         return context
 
-class AnswerAdmin(admin.StackedInline):
+#class AnswerAdmin(admin.StackedInline):
+#class AnswerInlineAdmin(admin.StackedInline):
+class AnswerInlineAdmin(TranslatableStackedInline):
     model = Answer
+
+    # kuiyu added fk_name
+#    fk_name = 'cms_saq.Question'
+#    form = 
+#    formset = 
+
     extra = 0
     verbose_name = "answer"
     prepopulated_fields = {"slug": ("title",)}
 
-class NoHelpTextAnswerAdmin(AnswerAdmin):
+    # kuiyu: need custom method to get translatedfield title
+    def get_title(self, obj):
+        return obj.title
+        get_title.short_description = ('Title')
+
+class NoHelpTextAnswerAdmin(AnswerInlineAdmin):
     exclude = ('help_text',)
 
 class NoHelpTextGroupedAnswerAdmin(NoHelpTextAnswerAdmin):
@@ -86,7 +104,7 @@ class NoHelpTextGroupedAnswerAdmin(NoHelpTextAnswerAdmin):
 class QuestionPlugin(CMSPluginBase):
     model = Question
     module = "SAQ"
-    inlines = [AnswerAdmin]
+    inlines = [AnswerInlineAdmin]
     exclude = ('question_type',)
 
     def render(self, context, instance, placeholder):

@@ -1,4 +1,3 @@
-
 from django.db import models
 from django.db.models import Max, Sum
 
@@ -10,6 +9,10 @@ from cms.plugins.text.models import AbstractText
 
 # kuiyu multi-lingual
 from hvad.models import TranslatableModel, TranslatedFields
+#from parler.models import TranslatableModel, TranslatedFields
+
+from django.utils.translation import ugettext_lazy as _
+
 
 
 class QuestionnaireText(AbstractText):
@@ -21,29 +24,46 @@ class QuestionnaireText(AbstractText):
         'cms_saq.Answer', null=True, blank=True, related_name='trigger_text')
 
 
-class Answer(models.Model):
-    title = models.CharField(max_length=255)
-    slug = models.SlugField()
-    help_text = models.TextField(blank=True, null=True)
-    score = models.IntegerField(default=0)
-    order = models.IntegerField(default=0)
-    question = models.ForeignKey('cms_saq.Question', related_name="answers")
+#class Answer(models.Model):
+class Answer(TranslatableModel):
+#    title = models.CharField(max_length=255)
+    slug = models.SlugField(_("Slug"))
+#    help_text = models.TextField(blank=True, null=True)
+    score = models.IntegerField(_("Score"), default=0)
+    order = models.IntegerField(_("Order"), default=0)
+    question = models.ForeignKey('cms_saq.Question', related_name="answers",)
 
-    is_default = models.BooleanField(default=False)
+    is_default = models.BooleanField(_("Is Default"), default=False)
 
+    translations = TranslatedFields(
+        title = models.CharField(_("Title"), null=True, max_length=255),
+        help_text = models.TextField(_("Help Text"), blank=True, null=True),
+        group = models.CharField(_("Group"), max_length=255, blank=True, null=True)
+    )
     class Meta:
+        verbose_name = _("Answer")
+        verbose_name_plural = _("Answers")
         ordering = ('question', 'order', 'slug')
         unique_together = (('question', 'slug'),)
 
     def __unicode__(self):
-        return u"%s: %s" % (self.question.slug, self.title)
+        return self.lazy_translation_getter('title', '%s: %s' % (self.question.slug, self.title))
+#        return u"%s: %s" % (self.question.slug, self.title)
 
+    def save(self, *args, **kwargs):
+        # check that question is saved or exist in DB, if not, save it first
+        if self.question.pk is None:
+            self.question.save()
+        # kuiyu: TranslatableStackedInline bug  needs to set explicitly
+        self.question_id = self.question.id
+        print "---------------------------self.question_id = %d" % self.question_id
+        super(Answer, self).save(*args, **kwargs) # Call the "real" save() method.
 
 class GroupedAnswer(Answer):
-    group = models.CharField(max_length=255)
-
+#    group = models.CharField(max_length=255)
     class Meta:
-        ordering = ('group', 'order', 'slug')
+        ordering = ('translations__group', 'order', 'slug')
+        proxy = True        # kuiyu: needed to bypass master accessor problem
 
 
 class Question(CMSPlugin):
@@ -78,34 +98,40 @@ class Question(CMSPlugin):
     # Question plugin to a virtual question, 
     # which points to the set of answers. That way we don't need to have 2 versions
     # of every answer, one draft, one published.
+
+    def copy_answer_translations(self, newid, oldtrans):
+        for t in oldtrans:
+            t.pk = None
+#            t.id = None
+            t.master_id = newid
+            t.save()
+
+
     def copy_relations(self, oldinstance):
         self.depends_on_answer = oldinstance.depends_on_answer
         for answer in oldinstance.answers.all():
+            oldtrans = answer.translations.all()   # old answer's translations
             oldpk = answer.pk
-            # handle if groupedAnswers by creating and saving a new groupedanswer
+            newid = answer.id               # initialize newid to answer.id
             try:
+                # 1a) copy the groupedanswer
                 ga = GroupedAnswer.objects.get(pk=oldpk)
-                print "[%d] ga = %s" % (oldpk, ga)
-                print "new answer pk = %d" % answer.pk
                 gp = ga.group 
-                print "group = %s" % gp
-
-                # to copy inherited objects, GroupedAnswer is one, must set both id and pk to none
+                # to copy inherited objects, must set both pk *AND* id to None 
                 ga.pk = None
                 ga.id = None
                 ga.question = self
                 ga.save()
-
-                # the following Also WORKS!
-                #newga = GroupedAnswer.objects.create(question=self,pk=answer.pk,group=gp,title=answer.title)
-                #newga.save()
-                print "new ga = [%d] %s" % (ga.pk, ga)
+                newid = ga.id
             except:
+                # 1b) copy the answer
                 answer.pk = None
-                # copy into a new set of published answers by auto-assigning new pk
-                answer.question = self  # set new answers to new question instance
+                answer.question = self  # set new answers to new question
                 answer.save()
-                print "Not groupedAnswer, copying answers done." 
+                newid = answer.id
+
+            # copy over the translations
+            self.copy_answer_translations(newid, oldtrans)
 
     @staticmethod
     def all_in_tree(page):
@@ -219,7 +245,7 @@ class SectionedScoring(CMSPlugin):
     def scores_for_user(self, user):
         scores = [
             [s.label, s.score_for_user(user)] for s in self.sections.all()]
-        overall = sum([s[1] for s in scores]) / len(scores)
+        overall = sum([s[1] for s in scores]) / max(1,len(scores))
         return [scores, overall]
 
     def copy_relations(self, oldinstance):
