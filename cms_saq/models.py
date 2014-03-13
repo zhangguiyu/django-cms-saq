@@ -23,15 +23,29 @@ class QuestionnaireText(AbstractText):
     depends_on_answer = models.ForeignKey(
         'cms_saq.Answer', null=True, blank=True, related_name='trigger_text')
 
-
-#class Answer(models.Model):
-class Answer(TranslatableModel):
-#    title = models.CharField(max_length=255)
+class AnswerSet(TranslatableModel):
     slug = models.SlugField(_("Slug"))
-#    help_text = models.TextField(blank=True, null=True)
+    translations = TranslatedFields(
+        title = models.CharField(_("Title"), null=True, max_length=255),
+        help_text = models.TextField(_("Help Text"), blank=True, null=True),
+    )
+    class Meta:
+        verbose_name = _("AnswerSet")
+        verbose_name_plural = _("AnswerSets")
+#        ordering = ('question', 'order', 'slug')
+#        unique_together = (('question', 'slug'),)
+    def __unicode__(self):
+        return self.lazy_translation_getter('title', '%s: %s' % (self.slug, self.title))
+#        return u"%s: %s" % (self.question.slug, self.title)
+
+
+
+class Answer(TranslatableModel):
+    slug = models.SlugField(_("Slug"))
     score = models.IntegerField(_("Score"), default=0)
     order = models.IntegerField(_("Order"), default=0)
-    question = models.ForeignKey('cms_saq.Question', related_name="answers",)
+#    question = models.ForeignKey('cms_saq.Question', related_name="answers",)
+    answerset = models.ForeignKey(AnswerSet, related_name="answers",)
 
     is_default = models.BooleanField(_("Is Default"), default=False)
 
@@ -43,20 +57,20 @@ class Answer(TranslatableModel):
     class Meta:
         verbose_name = _("Answer")
         verbose_name_plural = _("Answers")
-        ordering = ('question', 'order', 'slug')
-        unique_together = (('question', 'slug'),)
+        ordering = ('answerset', 'order', 'slug')
+        unique_together = (('answerset', 'slug'),)
 
     def __unicode__(self):
-        return self.lazy_translation_getter('title', '%s: %s' % (self.question.slug, self.title))
+        return self.lazy_translation_getter('title', '%s: %s' % (self.answerset.slug, self.title))
 #        return u"%s: %s" % (self.question.slug, self.title)
 
     def save(self, *args, **kwargs):
-        # check that question is saved or exist in DB, if not, save it first
-        if self.question.pk is None:
-            self.question.save()
+        # check that answerset is saved or exist in DB, if not, save it first
+        if self.answerset.pk is None:
+            self.answerset.save()
         # kuiyu: TranslatableStackedInline bug  needs to set explicitly
-        self.question_id = self.question.id
-        print "---------------------------self.question_id = %d" % self.question_id
+        self.answerset_id = self.answerset.id
+        print "---------------------------self.answerset_id = %d" % self.answerset_id
         super(Answer, self).save(*args, **kwargs) # Call the "real" save() method.
 
 class GroupedAnswer(Answer):
@@ -65,8 +79,7 @@ class GroupedAnswer(Answer):
         ordering = ('translations__group', 'order', 'slug')
         proxy = True        # kuiyu: needed to bypass master accessor problem
 
-
-class Question(CMSPlugin):
+class Question(TranslatableModel):
     QUESTION_TYPES = [
         ('S', 'Single-choice question'),
         ('M', 'Multi-choice question'),
@@ -77,28 +90,40 @@ class Question(CMSPlugin):
         help_text="A slug for identifying answers to this specific question "
         "(allows multiple only for multiple languages)")
     tags = TaggableManager(blank=True)
-    label = models.CharField(max_length=512, blank=True)
-    help_text = models.CharField(max_length=512, blank=True)
     question_type = models.CharField(max_length=1, choices=QUESTION_TYPES)
+
     optional = models.BooleanField(
         default=False,
-        help_text="Only applies to free text questions",
+        blank=True,
+        max_length=512,
+        help_text=_("Only applies to free text questions."),
+    )
+    translations = TranslatedFields(
+        label = models.CharField(_("Label"), max_length=512, blank=True),
+        help_text = models.TextField(_("Help Text"), blank=True, null=True)
     )
 
+    answerset = models.ForeignKey(AnswerSet, null=True, related_name='answerset'    )
+
+    # todo: replace with AnswerSet.answers
     depends_on_answer = models.ForeignKey(
         Answer, null=True, blank=True, related_name='trigger_questions')
 
-    # kuiyu 2014.03.04 When a question is published, CMSPlugin creates
-    # a duplicate, i.e., there will be 2 copies of questions:
+    # kuiyu 2014.03.04 When a question is published along with container page,
+    # CMSPlugin creates a published copy of the question:
     # one draft, one published
     # The draft question have associated answers, but the published one 
     # does not, so we copy over the answers associated to the draft over
     # to the published question.
-    # A better design for next version is to associate the
-    # Question plugin to a virtual question, 
-    # which points to the set of answers. That way we don't need to have 2 versions
-    # of every answer, one draft, one published.
-
+    # 
+    # The original design of cms_saq Question = CMSplugin
+    # which means there will be 2 copies of the question.
+    #
+    # In this new design, the Question plugin points to a question, 
+    # and the question points to a set of answers, AnswerSet.
+    # That way we don't need to have 2 versions (1 draft, 1 published)
+    # of every question/answers
+    '''
     def copy_answer_translations(self, newid, oldtrans):
         for t in oldtrans:
             t.pk = None
@@ -132,19 +157,7 @@ class Question(CMSPlugin):
 
             # copy over the translations
             self.copy_answer_translations(newid, oldtrans)
-
-    @staticmethod
-    def all_in_tree(page):
-        root = page.get_root()
-        # Remember that there might be questions on the root page as well!
-        tree = root.get_descendants() | Page.objects.filter(id=root.id)
-        placeholders = Placeholder.objects.filter(page__in=tree)
-        return Question.objects.filter(placeholder__in=placeholders)
-
-    @staticmethod
-    def all_in_page(page):
-        placeholders = Placeholder.objects.filter(page=page)
-        return Question.objects.filter(placeholder__in=placeholders)
+    '''
 
     def score(self, answers):
         if self.question_type == 'F':
@@ -182,7 +195,24 @@ class Question(CMSPlugin):
             return None
 
     def __unicode__(self):
-        return self.slug
+#        return self.slug
+        return self.lazy_translation_getter('label', '%s: %s' % (self.slug, self.label))
+
+class QA(CMSPlugin):
+    question = models.ForeignKey(Question, null=False, blank=True, related_name="plugin")
+    @staticmethod
+    def all_in_tree(page):
+        root = page.get_root()
+        # Remember that there might be questions on the root page as well!
+        tree = root.get_descendants() | Page.objects.filter(id=root.id)
+        placeholders = Placeholder.objects.filter(page__in=tree)
+        return QA.objects.filter(placeholder__in=placeholders)
+
+    @staticmethod
+    def all_in_page(page):
+        placeholders = Placeholder.objects.filter(page=page)
+        return QA.objects.filter(placeholder__in=placeholders)
+
 
 
 class SubmissionSet(models.Model):
@@ -218,27 +248,39 @@ class Submission(models.Model):
 
 
 class FormNav(CMSPlugin):
-    next_page = PageField(blank=True, null=True, related_name="formnav_nexts")
-    next_page_label = models.CharField(max_length=255, blank=True, null=True)
-    prev_page = PageField(blank=True, null=True, related_name="formnav_prevs")
-    prev_page_label = models.CharField(max_length=255, blank=True, null=True)
-    end_page = PageField(blank=True, null=True, related_name="formnav_ends")
-    end_page_label = models.CharField(max_length=255, blank=True, null=True)
+    next_page = PageField(blank=True, null=True, related_name="formnav_nexts",
+    help_text=_("Shown only if link is non-empty"))
+    next_page_label = models.CharField(max_length=255, blank=True, null=True,
+    help_text=_("Optional Label, defaults to 'Next'"))
+
+    prev_page = PageField(blank=True, null=True, related_name="formnav_prevs",
+    help_text=_("Shown only if link is non-empty"))
+    prev_page_label = models.CharField(max_length=255, blank=True, null=True,
+    help_text=_("Optional Label, defaults to 'Prev'"))
+
+    end_page = PageField(blank=True, null=True, related_name="formnav_ends",
+    help_text=_("Shown only if link is non-empty and end page condition question set below *and* subsequently answered by user."))
+    end_page_label = models.CharField(max_length=255, blank=True, null=True,
+    help_text=_("Optional Label, defaults to 'End/Analysis'. End link is shown only if the end page condition question is set and answer submitted"))
+
     end_page_condition_question = models.ForeignKey(
-        Question, null=True, blank=True)
+        Question, null=True, blank=True,
+        help_text=_("If set, End link will be shown if this question is answered."))
 
     end_submission_set = models.CharField(
         max_length=255,
         blank=True,
         null=True,
-        help_text="On submit, create a submission set from all "
-        "submissions with the submision set tag name."
-        " All sets created will be unique, if the given set name "
-        " exists, a numeric postfix will be added. "
-    )
+        help_text=_("On submit, create a submission set from all submissions with the submision set tag name.  All sets created will be unique, if the given set name already exists, a numeric suffix will be appended to the tag name.")
+        )
 
     submission_set_tag = models.CharField(
         max_length=255, blank=True, null=True)
+
+    # not needed correctly copied automatically by django-cms
+#    def copy_relations(self, oldinstance):
+#        self.end_page_condition_question = oldinstance.end_page_condition_question
+
 
 
 class SectionedScoring(CMSPlugin):
@@ -271,7 +313,7 @@ class ProgressBar(CMSPlugin):
 
     def progress_for_user(self, user):
         subs = Submission.objects.filter(
-            user=user).values_list('question', flat=True)
+            user=user.id).values_list('question', flat=True)
         questions = Question.all_in_tree(self.page)
 
         if not self.count_optional:

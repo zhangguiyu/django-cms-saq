@@ -8,7 +8,7 @@ from cms.plugin_pool import plugin_pool
 
 from cms_saq.models import Question, Answer, GroupedAnswer, Submission, \
         FormNav, ProgressBar, SectionedScoring, ScoreSection, BulkAnswer, \
-        QuestionnaireText
+        QuestionnaireText, QA, AnswerSet
 
 
 from cms.plugins.text.cms_plugins import TextPlugin
@@ -76,7 +76,6 @@ class QuestionnaireTextPlugin(TranslatedTextPlugin):
         context.update(extra)
         return context
 
-#class AnswerAdmin(admin.StackedInline):
 #class AnswerInlineAdmin(admin.StackedInline):
 class AnswerInlineAdmin(TranslatableStackedInline):
     model = Answer
@@ -95,25 +94,46 @@ class AnswerInlineAdmin(TranslatableStackedInline):
         return obj.title
         get_title.short_description = ('Title')
 
+class QuestionInlineAdmin(TranslatableStackedInline):
+    model = Question
+    # kuiyu added fk_name
+#    fk_name = 'cms_saq.Question'
+#    form = 
+#    formset = 
+
+    extra = 0
+    verbose_name = "Question"
+    prepopulated_fields = {"slug": ("title",)}
+
+    # kuiyu: need custom method to get translatedfield title
+    def get_title(self, obj):
+        return obj.title
+        get_title.short_description = ('Title')
+
+
 class NoHelpTextAnswerAdmin(AnswerInlineAdmin):
     exclude = ('help_text',)
 
 class NoHelpTextGroupedAnswerAdmin(NoHelpTextAnswerAdmin):
     model = GroupedAnswer
 
-class QuestionPlugin(CMSPluginBase):
-    model = Question
+class QAPlugin(CMSPluginBase):
+    model = QA
     module = "SAQ"
-    inlines = [AnswerInlineAdmin]
-    exclude = ('question_type',)
+#    inlines = [QuestionInlineAdmin]
+#    exclude = ('question_type',)
 
+    '''
     def render(self, context, instance, placeholder):
         user = context['request'].user
-
         submission_set = None
-
         triggered = True
         depends_on = None
+
+        # set submission_set iff depends_on_answer
+        # if a question has a depends_on_answer, it will trigger a
+        # submission_set, that's it. depends_on_answer does not
+        # filter the question display
         if instance.depends_on_answer:
             depends_on = instance.depends_on_answer.pk
             try:
@@ -150,6 +170,11 @@ class QuestionPlugin(CMSPluginBase):
     def save_model(self, request, obj, form, change):
         obj.question_type = self.question_type
         super(QuestionPlugin, self).save_model(request, obj, form, change)
+    '''
+
+'''
+
+
 
 
 class SessionDefinition(QuestionPlugin):
@@ -203,6 +228,7 @@ class FreeNumberQuestionPlugin(FreeTextQuestionPlugin):
         context = super(FreeNumberQuestionPlugin, self).render(context, instance, placeholder)
         context['numeric'] = True
         return context
+'''
 
 class FormNavPlugin(CMSPluginBase):
     model = FormNav
@@ -269,18 +295,22 @@ class BulkAnswerPlugin(CMSPluginBase):
         context['instance'] = instance
         return context
 
+'''
 plugin_pool.register_plugin(SingleChoiceQuestionPlugin)
 plugin_pool.register_plugin(MultiChoiceQuestionPlugin)
 plugin_pool.register_plugin(DropDownQuestionPlugin)
 plugin_pool.register_plugin(GroupedDropDownQuestionPlugin)
 plugin_pool.register_plugin(FreeTextQuestionPlugin)
 plugin_pool.register_plugin(FreeNumberQuestionPlugin)
+plugin_pool.register_plugin(SessionDefinition)
+'''
+
 plugin_pool.register_plugin(FormNavPlugin)
 plugin_pool.register_plugin(SectionedScoringPlugin)
 plugin_pool.register_plugin(ProgressBarPlugin)
 plugin_pool.register_plugin(BulkAnswerPlugin)
-plugin_pool.register_plugin(SessionDefinition)
 plugin_pool.register_plugin(QuestionnaireTextPlugin)
 plugin_pool.register_plugin(TranslatedTextPlugin)
+plugin_pool.register_plugin(QAPlugin)
 
 

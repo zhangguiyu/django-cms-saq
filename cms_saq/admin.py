@@ -19,9 +19,14 @@ class QuestionnaireTextAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'depends_on_answer')    
     
 #class QuestionAdmin(TranslatableAdmin, PlaceholderAdmin):
-class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('slug', 'label', 'question_type', 'optional', 'depends_on_answer')
+class QuestionAdmin(TranslatableAdmin):
+    list_display = ('slug', '__unicode__', 'question_type', 'optional', 'depends_on_answer')
 
+#class QAAdmin(admin.ModelAdmin, PlaceholderAdmin):
+class QAAdmin(admin.ModelAdmin):
+    class Meta:
+        model = QA
+#    list_display = ('question')
 
 class AnswerAdminForm(TranslatableModelForm):
     class Meta:
@@ -36,7 +41,7 @@ class AnswerAdmin(TranslatableAdmin):
     model = Answer
     extra = 0
 #    prepopulated_fields = {'slug': ('title',)} # fails for hvad 0.3
-    list_display = ('slug', '__unicode__', 'all_translations', 'score', 'order', 'is_default', 'question')
+    list_display = ('slug', '__unicode__', 'all_translations', 'score', 'order', 'is_default', 'answerset')
 
     form = AnswerAdminForm
 
@@ -60,10 +65,24 @@ class AnswerAdmin(TranslatableAdmin):
         return obj.help_text
         get_helptext.short_description = _('Help Text')
 
+class AnswerSetAdmin(TranslatableAdmin):
+    model = AnswerSet
+    extra = 0
+    list_display = ('slug', '__unicode__', 'all_translations', 'get_helptext')
+
+    # hack because you cannot use the following
+    # prepopulated_fields = {'slug': ('title',)}
+    # see https://github.com/KristianOellegaard/django-hvad/issues/10
+    def __init__(self, *args, **kwargs):
+        super(AnswerSetAdmin, self).__init__(*args, **kwargs)
+        self.prepopulated_fields = {'slug': ('title',)}
+    def get_helptext(self, obj):
+        return obj.help_text
+        get_helptext.short_description = _('Help Text')
 
 
 class GroupedAnswerAdmin(TranslatableAdmin):
-    list_display = ('slug', 'title', 'help_text', 'score', 'order', 'is_default', 'question', 'group')
+    list_display = ('slug', 'title', 'help_text', 'score', 'order', 'is_default', 'answerset', 'group')
 
 class SubmissionSetAdmin(admin.ModelAdmin):
     list_display = ('slug', 'user')
@@ -88,7 +107,9 @@ class BulkAnswerAdmin(admin.ModelAdmin):
 
 admin.site.register(QuestionnaireText, QuestionnaireTextAdmin)
 admin.site.register(Question, QuestionAdmin)
+admin.site.register(QA, QAAdmin)
 admin.site.register(Answer, AnswerAdmin)
+admin.site.register(AnswerSet, AnswerSetAdmin)
 admin.site.register(GroupedAnswer, GroupedAnswerAdmin)
 admin.site.register(SubmissionSet, SubmissionSetAdmin)
 admin.site.register(Submission, SubmissionAdmin)
