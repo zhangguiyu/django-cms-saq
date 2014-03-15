@@ -87,10 +87,18 @@ class Question(TranslatableModel):
     ]
 
     slug = models.SlugField(
-        help_text="A slug for identifying answers to this specific question "
-        "(allows multiple only for multiple languages)")
-    tags = TaggableManager(blank=True)
+        help_text=_("A slug for identifying answers to this specific question. Use the same slug for different translations of the same question if you want to tally results across different languages of the same question"))
+    translations = TranslatedFields(
+        label = models.CharField(_("Label"), max_length=512, blank=True),
+        help_text = models.TextField(_("Help Text"), blank=True, null=True)
+    )
     question_type = models.CharField(max_length=1, choices=QUESTION_TYPES)
+    tags = TaggableManager(blank=True)
+    answerset = models.ForeignKey(AnswerSet, blank=True, null=True, related_name='answerset',
+    help_text=_("Pick a common answerset for this Question. Leave blank for Free-text question."),
+    )
+
+
 
     optional = models.BooleanField(
         default=False,
@@ -98,12 +106,6 @@ class Question(TranslatableModel):
         max_length=512,
         help_text=_("Only applies to free text questions."),
     )
-    translations = TranslatedFields(
-        label = models.CharField(_("Label"), max_length=512, blank=True),
-        help_text = models.TextField(_("Help Text"), blank=True, null=True)
-    )
-
-    answerset = models.ForeignKey(AnswerSet, null=True, related_name='answerset'    )
 
     # todo: replace with AnswerSet.answers
     depends_on_answer = models.ForeignKey(

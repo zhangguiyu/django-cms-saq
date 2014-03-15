@@ -38,13 +38,19 @@
     <span class="saq-question-help-text">{% if question.help_text %}{% trans question.help_text %}{% endif %}</span>
 </div>
 {% endif %}
+{% if question.question_type == 'F' %}
+<div id="saq-question-free-{{ question.slug }}">
+<div class="saq-question-error"></div>
+<input class="saq-question saq-question-free {% if numeric %} numeric {% endif %}" type="text" value="{{ submission.answer }}">
+</div>
+{% else %}
 <ul class="saq-question saq-question-{% saq_qtype question.slug 'type' %}" id="saq-question-{% saq_qtype question.slug 'type' %}-{{ question.slug }}">
     <li class="saq-question-error"></li>
     {% for answer in answers %}
     <li class="saq-answer saq-answer-{% saq_qtype question.slug 'type' %}">
-        <input type="radio" id="saq-answer-{% saq_qtype question.slug 'type' %}-{{ answer.pk }}"
+        <input type="{% if question.question_type == 'S'%}radio{% elif question.question_type == 'M' %}checkbox{% endif %}" id="saq-answer-{% saq_qtype question.slug 'type' %}-{{ answer.pk }}"
         name="{{ question.slug }}" value="{{ answer.slug }}"
-        {% if submission and answer.slug == submission.answer %}checked{% endif %}>
+        {% if submission and answer.slug in submission.answer_list %}checked{% endif %}>
         <label for="saq-answer-{% saq_qtype question.slug 'type' %}-{{ answer.pk }}">
             <div class="saq-answer-title">{% trans answer.title %}</div>
             <div class="saq-answer-help-text">
@@ -54,6 +60,6 @@
     </li>
     {% endfor %}
 </ul>
+{% endif %}
 </div>
-
 {# vim: set filetype=htmldjango: #}

@@ -146,10 +146,11 @@ class QAPlugin(CMSPluginBase):
                 triggered = False
         extra = {
             'question': instance.question,
-            'answers': instance.question.answerset.answers.all(),
             'triggered': triggered,
             'depends_on': depends_on,
         }
+        if instance.question.question_type != 'F':
+            extra.update({'answers': instance.question.answerset.answers.all()})
         if user.is_authenticated():
             try:
                 extra['submission'] = Submission.objects.get(
