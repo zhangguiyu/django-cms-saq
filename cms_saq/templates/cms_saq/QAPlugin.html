@@ -1,0 +1,61 @@
+{% load sekizai_tags markup %}
+{% load saq_tags %}
+{% load i18n %}
+
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/underscore-1.3.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/json2.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/libs/backbone-0.9.1.min.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}<script type="text/javascript" src="{{ STATIC_URL }}js/saq.js"></script>{% endaddtoblock %}
+{% addtoblock "js" %}
+<script type="text/javascript">
+    $(function () {
+        var model = new SAQ.Question({
+            slug: '{{ question.slug }}'
+            optional: {{ question.optional|yesno:"true,false" }}
+        });
+        var view = new SAQ.{% saq_qtype question.slug 'view' %}QuestionView({
+            el: $("#saq-question-{% saq_qtype question.slug 'type' %}-{{ question.slug }}")[0],
+            model: model
+        });
+{% if question_type == 'F' %}
+        $('input.numeric').bind('keypress', function (e) {
+        if($(this).val().length == 0 && e.which == 45)
+            return true;
+        return (e.which != 8 && e.which != 0 && (e.which < 48 || e.which > 57) && e.which != 46) ? false : true;
+        });
+{% endif %}}
+        SAQ.questions.add(model);
+    });
+</script>
+{% endaddtoblock %}
+
+<div class="saq-question-container saq-question-{% saq_qtype question.slug 'type' %}-container {{ question.slug }}-container"
+{% if not triggered %} style="display:none;" {% endif %}
+{% if depends_on %} data-dependency="{{ depends_on }}" {% endif %}
+>
+
+{% if question.label %}
+<div>
+    <label class="saq-question-label" for="saq-question-{% saq_qtype question.slug 'type' %}-{{ question.slug }}">{% trans question.label %}</label>
+    <span class="saq-question-help-text">{% if question.help_text %}{% trans question.help_text %}{% endif %}</span>
+</div>
+{% endif %}
+<ul class="saq-question saq-question-{% saq_qtype question.slug 'type'%}" id="saq-question-{% saq_qtype question.slug 'type' %}-{{ question.slug }}">
+    <li class="saq-question-error"></li>
+    {% for answer in answers %}
+    <li class="saq-answer saq-answer-{% saq_qtype question.slug 'type'%}">
+        <input type="radio" id="saq-answer-{% saq_qtype question.slug 'type'%}-{{ answer.pk }}"
+        name="{{ question.slug }}" value="{{ answer.slug }}"
+        {% if submission and answer.slug == submission.answer %}checked{% endif %}>
+        <label for="saq-answer-{% saq_qtype question.slug 'type'%}-{{ answer.pk }}">
+            <div class="saq-answer-title">{% trans answer.title %}</div>
+            <div class="saq-answer-help-text">
+                {% if question.help_text %}{{ answer.help_text|markdown }}{% endif %}
+            </div>
+        </label>
+    </li>
+    {% endfor %}
+</ul>
+</div>
+
+{# vim: set filetype=htmldjango: #}

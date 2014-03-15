@@ -1,6 +1,6 @@
 from django import template
 
-from cms_saq.models import Question, Answer, Submission, aggregate_score_for_user_by_tags
+from cms_saq.models import QA, Question, Answer, Submission, aggregate_score_for_user_by_tags
 
 register = template.Library()
 
@@ -45,3 +45,41 @@ def saq_nice_answer(context, question_slug):
         return ""
     return answer.title
 
+
+from django import template
+class FormatQslugNode(template.Node):
+    def __init__(self, questionslug):
+        self.questionslug = template.Variable(questionslug)
+
+    def render(self, context):
+        try:
+            qslug = self.questionslug.resolve(context)
+            return qslug
+        except template.VariableDoesNotExist:
+            return ''
+
+@register.simple_tag(takes_context=True)
+def saq_qtype(context, qslug, rtype):
+    ''' 
+    Returns question type:
+        'type': 'single', 'multiple', 'free' for javascript
+        'view': 'SingleChoice', 'MultiChoice', 'FreeText'
+    '''
+    try:
+        question = Question.objects.get(slug=qslug)
+    except Question.DoesNotExist:
+        return ''
+    if rtype == 'type':
+        if question.question_type == 'S':
+            return 'single'
+        elif question.question_type == 'M':
+            return 'multiple'
+        elif question.question_type == 'F':
+            return 'free'
+    elif rtype == 'view':
+        if question.question_type == 'S':
+            return 'SingleChoice'
+        elif question.question_type == 'M':
+            return 'MultiChoice'
+        elif question.question_type == 'F':
+            return 'FreeText'
