@@ -20,7 +20,6 @@ from bs4 import BeautifulSoup
 from hvad.admin import TranslatableStackedInline
 #from parler.admin import TranslatableStackedInline
 
-
 class TranslatedTextPlugin(TextPlugin):
     """ Text plugin that pushes every text string through i18n translations
         when rendered.
@@ -122,61 +121,55 @@ class QAPlugin(CMSPluginBase):
     module = "SAQ"
 #    inlines = [QuestionInlineAdmin]
 #    exclude = ('question_type',)
-
-    '''
+    # todo: use different template for different questions
+    render_template = "cms_saq/QAPlugin.html"
     def render(self, context, instance, placeholder):
         user = context['request'].user
         submission_set = None
         triggered = True
         depends_on = None
-
         # set submission_set iff depends_on_answer
         # if a question has a depends_on_answer, it will trigger a
         # submission_set, that's it. depends_on_answer does not
         # filter the question display
-        if instance.depends_on_answer:
-            depends_on = instance.depends_on_answer.pk
+        if instance.question.depends_on_answer:
+            depends_on = instance.question.depends_on_answer.pk
             try:
                 Submission.objects.get(
                     user=user,
-                    question= instance.depends_on_answer.question.slug,
-                    answer = instance.depends_on_answer.slug,
+                    question= instance.question.depends_on_answer.question.slug,
+                    answer = instance.question.depends_on_answer.slug,
                     submission_set=submission_set,
                 )
                 triggered = True
             except:
                 triggered = False
-
         extra = {
-            'question': instance,
-            'answers': instance.answers.all(),
+            'question': instance.question,
+            'answers': instance.question.answerset.answers.all(),
             'triggered': triggered,
             'depends_on': depends_on,
         }
-
         if user.is_authenticated():
             try:
                 extra['submission'] = Submission.objects.get(
                     user=user,
-                    question=instance.slug,
+                    question=instance.question.slug,
                     submission_set = submission_set
                 )
             except Submission.DoesNotExist:
                 pass
-
         context.update(extra)
         return context
 
+    '''
     def save_model(self, request, obj, form, change):
         obj.question_type = self.question_type
         super(QuestionPlugin, self).save_model(request, obj, form, change)
     '''
 
+
 '''
-
-
-
-
 class SessionDefinition(QuestionPlugin):
     name = "Session Definition"
     render_template = "cms_saq/single_choice_question.html"

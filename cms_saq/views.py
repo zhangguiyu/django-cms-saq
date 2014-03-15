@@ -23,7 +23,7 @@ def _submit(request):
 
         # validate the question
         try:
-            question = Question.objects.get(slug=question_slug)
+            question = Question.objects.filter(slug=question_slug).order_by('id').reverse()[0]
         except Question.DoesNotExist:
             return HttpResponseBadRequest("Invalid question '%s'" % question_slug)
         # check answers is a list of slugs

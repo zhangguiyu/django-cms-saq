@@ -13,8 +13,6 @@ from hvad.models import TranslatableModel, TranslatedFields
 
 from django.utils.translation import ugettext_lazy as _
 
-
-
 class QuestionnaireText(AbstractText):
     """ Text plugin which, when rendered is translated
         using django translations.  Also provides
@@ -40,6 +38,7 @@ class AnswerSet(TranslatableModel):
 
 
 
+# todo: add img, scale options
 class Answer(TranslatableModel):
     slug = models.SlugField(_("Slug"))
     score = models.IntegerField(_("Score"), default=0)
@@ -79,6 +78,7 @@ class GroupedAnswer(Answer):
         ordering = ('translations__group', 'order', 'slug')
         proxy = True        # kuiyu: needed to bypass master accessor problem
 
+# todo: add image, scale
 class Question(TranslatableModel):
     QUESTION_TYPES = [
         ('S', 'Single-choice question'),
@@ -163,10 +163,10 @@ class Question(TranslatableModel):
         if self.question_type == 'F':
             return 0
         elif self.question_type == 'S':
-            return self.answers.get(slug=answers).score
+            return self.answerset.answers.get(slug=answers).score
         elif self.question_type == 'M':
             answers_list = answers.split(',')
-            return sum([self.answers.get(slug=a).score for a in answers_list])
+            return sum([self.answerset.answers.get(slug=a).score for a in answers_list])
 
     @property
     def max_score(self):
@@ -314,14 +314,17 @@ class ProgressBar(CMSPlugin):
     def progress_for_user(self, user):
         subs = Submission.objects.filter(
             user=user.id).values_list('question', flat=True)
-        questions = Question.all_in_tree(self.page)
+        qas = QA.all_in_tree(self.page)
 
         if not self.count_optional:
-            questions = questions.filter(optional=False)
+            qas = QA.filter(optional=False)
 
-        answered = questions.filter(slug__in=subs)
-
-        return (answered.count(), questions.count())
+        answered = 0
+        for qa in qas:
+            if qa.question.slug in subs:
+                answered = answered + 1
+#        answered = qas.question.all().filter(slug__in=subs)
+        return (answered, qas.count())
 
 
 class BulkAnswer(CMSPlugin):
