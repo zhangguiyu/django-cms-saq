@@ -89,7 +89,7 @@ class Question(TranslatableModel):
     slug = models.SlugField(
         help_text=_("A slug for identifying answers to this specific question. Use the same slug for different translations of the same question if you want to tally results across different languages of the same question"))
     translations = TranslatedFields(
-        label = models.CharField(_("Label"), max_length=512, blank=True),
+        label = models.CharField(_("Label"), max_length=512, blank=False, null=False),
         help_text = models.TextField(_("Help Text"), blank=True, null=True)
     )
     question_type = models.CharField(max_length=1, choices=QUESTION_TYPES)
@@ -107,59 +107,12 @@ class Question(TranslatableModel):
         help_text=_("Only applies to free text questions."),
     )
 
-    # todo: replace with AnswerSet.answers
+    # If set, this quesiton will be shown if and only if the set
+    # Question/Answer pair is true
+    depends_on_question = models.ForeignKey(
+        'self', null=True, blank=True, related_name='slave_questions')
     depends_on_answer = models.ForeignKey(
-        Answer, null=True, blank=True, related_name='trigger_questions')
-
-    # kuiyu 2014.03.04 When a question is published along with container page,
-    # CMSPlugin creates a published copy of the question:
-    # one draft, one published
-    # The draft question have associated answers, but the published one 
-    # does not, so we copy over the answers associated to the draft over
-    # to the published question.
-    # 
-    # The original design of cms_saq Question = CMSplugin
-    # which means there will be 2 copies of the question.
-    #
-    # In this new design, the Question plugin points to a question, 
-    # and the question points to a set of answers, AnswerSet.
-    # That way we don't need to have 2 versions (1 draft, 1 published)
-    # of every question/answers
-    '''
-    def copy_answer_translations(self, newid, oldtrans):
-        for t in oldtrans:
-            t.pk = None
-#            t.id = None
-            t.master_id = newid
-            t.save()
-
-
-    def copy_relations(self, oldinstance):
-        self.depends_on_answer = oldinstance.depends_on_answer
-        for answer in oldinstance.answers.all():
-            oldtrans = answer.translations.all()   # old answer's translations
-            oldpk = answer.pk
-            newid = answer.id               # initialize newid to answer.id
-            try:
-                # 1a) copy the groupedanswer
-                ga = GroupedAnswer.objects.get(pk=oldpk)
-                gp = ga.group 
-                # to copy inherited objects, must set both pk *AND* id to None 
-                ga.pk = None
-                ga.id = None
-                ga.question = self
-                ga.save()
-                newid = ga.id
-            except:
-                # 1b) copy the answer
-                answer.pk = None
-                answer.question = self  # set new answers to new question
-                answer.save()
-                newid = answer.id
-
-            # copy over the translations
-            self.copy_answer_translations(newid, oldtrans)
-    '''
+        'Answer', null=True, blank=True, related_name='slave_questions')
 
     def score(self, answers):
         if self.question_type == 'F':
@@ -174,10 +127,10 @@ class Question(TranslatableModel):
     def max_score(self):
         if not hasattr(self, '_max_score'):
             if self.question_type == "S":
-                self._max_score = self.answers.aggregate(
+                self._max_score = self.answerset.answers.aggregate(
                     Max('score'))['score__max']
             elif self.question_type == "M":
-                self._max_score = self.answers.aggregate(
+                self._max_score = self.answerset.answers.aggregate(
                     Sum('score'))['score__sum']
             else:
                 self._max_score = None  # don't score free-text answers
@@ -267,7 +220,7 @@ class FormNav(CMSPlugin):
 
     end_page_condition_question = models.ForeignKey(
         Question, null=True, blank=True,
-        help_text=_("If set, End link will be shown if this question is answered."))
+        help_text=_("If set, End link will be shown if this question is answered. Typically this is the last question in your survey. Beware, if you set this question. End link is visible even if user answered just 1 question, the end condition question, out of N questions."))
 
     end_submission_set = models.CharField(
         max_length=255,

@@ -33,7 +33,7 @@
         <input class="saq-end-button-data" hidden value="{{ instance.submission_set_tag }}" name="submission_set_tag"></input>
     </form>
     {% endif %}
-    <a class="saq-end-button" href="#">{% if instance.end_page_label %}{% trans instance.end_page_label %}{% else %}{% trans "Analysis" %}{% endif %}</a>
+    <a class="saq-end-button" href="#">{% if instance.end_page_label %}{% trans instance.end_page_label %}{% else %}{% trans "End/Analysis" %}{% endif %}</a>
     {% endif %}
     {% csrf_token %}
 </div>
