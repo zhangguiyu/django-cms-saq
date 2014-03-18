@@ -13,13 +13,21 @@ from hvad.models import TranslatableModel, TranslatedFields
 
 from django.utils.translation import ugettext_lazy as _
 
+from django.core.exceptions import ValidationError
+
 class QuestionnaireText(AbstractText):
     """ Text plugin which, when rendered is translated
         using django translations.  Also provides
         means of making text dependent on SAQ answers.
     """
+    depends_on_question = models.ForeignKey(
+        'Question', null=True, blank=True, related_name='trigger_text',
+        help_text = _("Current text will be visible only if this dependent question is answered as follows:"))
     depends_on_answer = models.ForeignKey(
-        'cms_saq.Answer', null=True, blank=True, related_name='trigger_text')
+        'Answer', null=True, blank=True, related_name='trigger_text',
+        help_text = _("Current text will be visible only if this dependent answer is selected for the above dependent question."))
+
+
 
 class AnswerSet(TranslatableModel):
     slug = models.SlugField(_("Slug"))
@@ -87,19 +95,16 @@ class Question(TranslatableModel):
     ]
 
     slug = models.SlugField(
-        help_text=_("A slug for identifying answers to this specific question. Use the same slug for different translations of the same question if you want to tally results across different languages of the same question"))
+        help_text=_("A slug for identifying answers to this specific question. Use the same slug for different translations of the same question if you want to tally results across different languages."))
     translations = TranslatedFields(
-        label = models.CharField(_("Label"), max_length=512, blank=False, null=False),
+        label = models.CharField(_("Label"), max_length=512, blank=False, null=False, help_text=_("Question Text.")),
         help_text = models.TextField(_("Help Text"), blank=True, null=True)
     )
     question_type = models.CharField(max_length=1, choices=QUESTION_TYPES)
     tags = TaggableManager(blank=True)
-    answerset = models.ForeignKey(AnswerSet, blank=True, null=True, related_name='answerset',
-    help_text=_("Pick a common answerset for this Question. Leave blank for Free-text question."),
+    answerset = models.ForeignKey(AnswerSet, blank=True, null=True, related_name='questions',
+    help_text=_("Pick or define a answerset for this Question. Leave blank for Free-text question."),
     )
-
-
-
     optional = models.BooleanField(
         default=False,
         blank=True,
@@ -110,9 +115,11 @@ class Question(TranslatableModel):
     # If set, this quesiton will be shown if and only if the set
     # Question/Answer pair is true
     depends_on_question = models.ForeignKey(
-        'self', null=True, blank=True, related_name='slave_questions')
+        'self', null=True, blank=True, related_name='slave_questions',
+        help_text = _("Current question will be visible only if this dependent question has been previously answered with dependent answer below."))
     depends_on_answer = models.ForeignKey(
-        'Answer', null=True, blank=True, related_name='slave_questions')
+        'Answer', null=True, blank=True, related_name='slave_questions',
+        help_text = _("Desired dependent answer for above dependent question. Only when user has answered the dependent question with the dependent answer, will the current question be visible."))
 
     def score(self, answers):
         if self.question_type == 'F':
@@ -176,7 +183,10 @@ class SubmissionSet(models.Model):
         sets of answers to the same questionnaire.
     """
     slug = models.SlugField(blank=True)
-    user = models.ForeignKey('auth.User', related_name='saq_submissions_sets')
+    user = models.ForeignKey('auth.User', related_name='submission_sets')
+
+    def __unicode__(self):
+        return self.slug
 
 
 class Submission(models.Model):
@@ -184,7 +194,7 @@ class Submission(models.Model):
     question = models.SlugField()
     answer = models.TextField(blank=True)
     score = models.IntegerField()
-    user = models.ForeignKey('auth.User', related_name='saq_submissions')
+    user = models.ForeignKey('auth.User', related_name='submissions')
 
     submission_set = models.ForeignKey(
         SubmissionSet, related_name='submissions', null=True)
@@ -226,11 +236,13 @@ class FormNav(CMSPlugin):
         max_length=255,
         blank=True,
         null=True,
-        help_text=_("On submit, create a submission set from all submissions with the submision set tag name.  All sets created will be unique, if the given set name already exists, a numeric suffix will be appended to the tag name.")
+        help_text=_("Slug for submission set. On submit, create a submission set for all submissions with the following question tag defined below. All submission sets created will be unique, if the given submission set slug already exists, a numeric suffix will be appended to the submission set slug.")
         )
 
     submission_set_tag = models.CharField(
-        max_length=255, blank=True, null=True)
+        max_length=255, blank=True, null=True,
+        help_text=_("Question tag for the submission set. Answers to Questions with this tag will be part of the submission set.")
+        )
 
     # not needed correctly copied automatically by django-cms
 #    def copy_relations(self, oldinstance):
@@ -271,13 +283,16 @@ class ProgressBar(CMSPlugin):
             user=user.id).values_list('question', flat=True)
         qas = QA.all_in_tree(self.page)
 
-        if not self.count_optional:
-            qas = QA.filter(optional=False)
+#        if not self.count_optional:
+#            qas = qas.filter(optional=False)
 
         answered = 0
         for qa in qas:
             if qa.question.slug in subs:
-                answered = answered + 1
+                if self.count_optional:
+                    answered = answered + 1
+                elif qa.question.optional == False:
+                    answered = answered + 1
 #        answered = qas.question.all().filter(slug__in=subs)
         return (answered, qas.count())
 
@@ -313,3 +328,13 @@ def aggregate_score_for_user_by_tags(user, tags):
         return sum(scores) / len(scores)
     else:
         return 0
+
+def validate_qa(dq, da):
+    if da is None or da not in dq.answerset.answers.all():
+        raise ValidationError(_("%s is not a valid dependent answer for specified dependent Question %s." % (da, dq))) 
+
+def get_version(page):
+    if page.publisher_is_draft:
+        return _("Draft")
+    else:
+        return _("Published")

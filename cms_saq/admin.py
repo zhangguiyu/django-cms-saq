@@ -5,22 +5,28 @@ from django.utils.translation import ungettext
 from cms.admin.placeholderadmin import PlaceholderAdmin
 
 from cms_saq.models import *
+from cms_saq.forms import QuestionForm, AnswerForm
 
 from django.utils.translation import ugettext as _
 
 from hvad.admin import TranslatableAdmin
-from hvad.forms import TranslatableModelForm
 
 #from parler.admin import TranslatableAdmin
+
 
 class QuestionnaireTextAdmin(admin.ModelAdmin):
 #    date_hierarchy = 'pub_date'
 #    list_display = ('__unicode__', 'depends_on_answer', 'all_translations')    
     list_display = ('__unicode__', 'depends_on_answer')    
-    
+
+        
 #class QuestionAdmin(TranslatableAdmin, PlaceholderAdmin):
 class QuestionAdmin(TranslatableAdmin):
-    list_display = ('slug', '__unicode__', 'question_type', 'optional', 'depends_on_answer')
+    form = QuestionForm
+    list_display = ('slug', '__unicode__', 'question_type', 'get_tags', 'optional', 'depends_on_question', 'depends_on_answer')
+    def get_tags(self, obj):
+        return obj.tags.names()
+        get_tags.short_description = _('Tags')
 
 #class QAAdmin(admin.ModelAdmin, PlaceholderAdmin):
 class QAAdmin(admin.ModelAdmin):
@@ -28,22 +34,13 @@ class QAAdmin(admin.ModelAdmin):
         model = QA
 #    list_display = ('question')
 
-class AnswerAdminForm(TranslatableModelForm):
-    class Meta:
-        model = Answer
-
-    def clean_name(self):
-        print "------------------------title = %s" % title
-        # do something that validates your data
-        # return self.cleaned_data["name"]
-
 class AnswerAdmin(TranslatableAdmin):
     model = Answer
     extra = 0
 #    prepopulated_fields = {'slug': ('title',)} # fails for hvad 0.3
     list_display = ('slug', '__unicode__', 'all_translations', 'score', 'order', 'is_default', 'answerset')
 
-    form = AnswerAdminForm
+    form = AnswerForm
 
     # hack because you cannot use the following
     # prepopulated_fields = {'slug': ('title',)}
@@ -85,13 +82,20 @@ class GroupedAnswerAdmin(TranslatableAdmin):
     list_display = ('slug', 'title', 'help_text', 'score', 'order', 'is_default', 'answerset', 'group')
 
 class SubmissionSetAdmin(admin.ModelAdmin):
-    list_display = ('slug', 'user')
+    list_display = ('user', 'slug', 'get_submissions')
+    def get_submissions(self, obj):
+        qlist = []
+        for s in obj.submissions.all():
+            qlist.append(s.question) 
+        return qlist
 
 class SubmissionAdmin(admin.ModelAdmin):
     list_display = ('question', 'answer', 'score', 'user', 'submission_set')
 
 class FormNavAdmin(admin.ModelAdmin):
-    list_display = ('prev_page', 'prev_page_label', 'next_page', 'next_page_label', 'end_page', 'end_page_label', 'end_page_condition_question', 'end_submission_set', 'submission_set_tag')
+    list_display = ('version', 'prev_page', 'prev_page_label', 'next_page', 'next_page_label', 'end_page', 'end_page_label', 'end_page_condition_question', 'end_submission_set', 'submission_set_tag')
+    def version(self, obj):
+        return get_version(obj.page)
 
 class SectionedScoringAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'scores_for_user')
