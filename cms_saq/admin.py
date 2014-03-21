@@ -5,7 +5,7 @@ from django.utils.translation import ungettext
 from cms.admin.placeholderadmin import PlaceholderAdmin
 
 from cms_saq.models import *
-from cms_saq.forms import QuestionForm, AnswerForm
+from cms_saq.forms import QuestionForm, AnswerForm, QuestionnaireTextForm
 
 from django.utils.translation import ugettext as _
 
@@ -15,9 +15,10 @@ from hvad.admin import TranslatableAdmin
 
 
 class QuestionnaireTextAdmin(admin.ModelAdmin):
+    form = QuestionnaireTextForm
 #    date_hierarchy = 'pub_date'
 #    list_display = ('__unicode__', 'depends_on_answer', 'all_translations')    
-    list_display = ('__unicode__', 'depends_on_answer')    
+    list_display = ('__unicode__', 'depends_on_question', 'depends_on_answer')    
 
         
 #class QuestionAdmin(TranslatableAdmin, PlaceholderAdmin):

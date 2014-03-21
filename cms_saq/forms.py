@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from django import forms
+
 '''
 #  https://github.com/danfairs/django-lazysignup
 from emailusernames.forms import EmailUserCreationForm
@@ -9,7 +11,7 @@ from emailusernames.utils import _email_to_username
 
 from hvad.forms import TranslatableModelForm
 
-from cms_saq.models import Question, Answer, validate_qa
+from cms_saq.models import Question, Answer, QuestionnaireText, validate_qa
 
 '''
 class SAQSignupForm(EmailUserCreationForm):
@@ -61,4 +63,6 @@ class QuestionForm(TranslatableModelForm):
                 raise ValidationError(_("Selected dependent answer %s has multiple associated questions. You did not specify a dependent question, please do so." % a)) 
         return self.cleaned_data['depends_on_answer']
 
-
+class QuestionnaireTextForm(forms.ModelForm):
+    class Meta:
+        model = QuestionnaireText

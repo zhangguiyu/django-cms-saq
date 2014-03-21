@@ -16,9 +16,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 
 class QuestionnaireText(AbstractText):
-    """ Text plugin which, when rendered is translated
-        using django translations.  Also provides
-        means of making text dependent on SAQ answers.
+#class QuestionnaireText(TranslatableModel):
+    """
+    Text plugin that appears conditional on a defined Question/Answer Submission
     """
     depends_on_question = models.ForeignKey(
         'Question', null=True, blank=True, related_name='trigger_text',
@@ -26,7 +26,6 @@ class QuestionnaireText(AbstractText):
     depends_on_answer = models.ForeignKey(
         'Answer', null=True, blank=True, related_name='trigger_text',
         help_text = _("Current text will be visible only if this dependent answer is selected for the above dependent question."))
-
 
 
 class AnswerSet(TranslatableModel):
@@ -236,12 +235,12 @@ class FormNav(CMSPlugin):
         max_length=255,
         blank=True,
         null=True,
-        help_text=_("Slug for submission set. On submit, create a submission set for all submissions with the following question tag defined below. All submission sets created will be unique, if the given submission set slug already exists, a numeric suffix will be appended to the submission set slug.")
+        help_text=_("Slug for OPTIONAL submission set. If defined, on submit, a unique submission set (per page) with this Slug will be created to group all submissions from the SAME page with THE question tag defined below. If Slug already exists, a numeric suffix will be appended, e.g., slug1, slug2, slug3. Note that questions on different pages will NOT be in the same submission set.")
         )
 
     submission_set_tag = models.CharField(
         max_length=255, blank=True, null=True,
-        help_text=_("Question tag for the submission set. Answers to Questions with this tag will be part of the submission set.")
+        help_text=_("Question tag for the submission set. Answers to Questions with this tag will be part of the submission set for EACH page.")
         )
 
     # not needed correctly copied automatically by django-cms
