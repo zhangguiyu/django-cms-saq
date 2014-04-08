@@ -15,6 +15,20 @@ from django.utils.translation import ugettext_lazy as _
 
 from django.core.exceptions import ValidationError
 
+
+
+def cleanUser(user):
+    '''
+    Guard against non-login user
+    '''
+    if user is None:        # None
+        return None
+    elif user.id is None:   # lazy object
+        return None         # set to none for unauthenticated users
+    else:
+        return user
+                
+
 class QuestionnaireText(AbstractText):
 #class QuestionnaireText(TranslatableModel):
     """
