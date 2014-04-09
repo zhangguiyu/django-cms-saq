@@ -7,6 +7,9 @@ from django.views.decorators.cache import never_cache
 from django.utils import simplejson, datastructures
 from django.conf import settings
 
+
+from ipware.ip import get_real_ip, get_ip
+
 from cms_saq.models import Question, Answer, Submission, SubmissionSet
 
 ANSWER_RE = re.compile(r'^[\w-]+(,[\w-]+)*$')
@@ -14,7 +17,7 @@ ANSWER_RE = re.compile(r'^[\w-]+(,[\w-]+)*$')
 
 @require_POST
 def _submit(request):
-
+    ip = get_ip(request)
     post_data = datastructures.MultiValueDict(request.POST)
     submission_set_slug = post_data.pop('end_submission_set', '')
     submission_set_tag = post_data.pop('submission_set_tag', '')
@@ -35,14 +38,19 @@ def _submit(request):
         except Answer.DoesNotExist:
             return HttpResponseBadRequest("Invalid answer '%s:%s'" % (question_slug, answers))
 
-        # save!
+        # search attributes
         filter_attrs = {
             'user': request.user,
             'question': question_slug,
             'submission_set': None # Don't update submissions belonging to an existing set
         }
 
-        attrs = {'answer': answers, 'score': score}
+        # new attributes to save/update
+        attrs = {
+            'answer': answers,
+            'score': score,
+            'ip': ip,
+        }
 
         rows = Submission.objects.filter(**filter_attrs).update(**attrs)
 
@@ -53,8 +61,8 @@ def _submit(request):
 
     # Create submission set if requested
     if submission_set_tag and submission_set_slug:
-        submission_set_tag = submission_set_tag[0]
-        submission_set_slug = submission_set_slug[0]
+        submission_set_tag = submission_set_tag[0]  # use first tag only
+        submission_set_slug = submission_set_slug[0] # use first slug only
 
         if submission_set_tag and submission_set_slug:
             _create_submission_set(request, submission_set_tag, submission_set_slug)
@@ -69,21 +77,25 @@ if getattr(settings, "SAQ_LAZYSIGNUP", False):
 else:
     submit = login_required(_submit)
 
+# TODO: collate all questions into this set or
+# fix first set, so that it is 1 submission set per page /submit
+
 def _create_submission_set(request, submission_set_tag, submission_set_slug):
     """ Creates a submission set from any submissions matching the given
-        tag that are not part of an existing set.
+        tag that are not part of an existing submission set.
     """
     # Find maximum slug name
     exists = True
     bump = 1
-    try_slug = submission_set_slug + "1"
+#    try_slug = submission_set_slug + "1"
+    try_slug = "%s%s" % (submission_set_slug, bump)  # slug1
     while exists:
-        try_slug = "%s%s" % (submission_set_slug, bump)
-        bump = bump + 1
+        try_slug = "%s%s" % (submission_set_slug, bump) # slug1
         exists = SubmissionSet.objects.filter(
-            user=request.user,
-            slug=try_slug
-        )
+                    user=request.user,
+                    slug=try_slug
+                )
+        bump = bump + 1
     submission_set_slug = try_slug
 
     # Add all tagged submissions to this set (if not already in a set)
@@ -122,4 +134,3 @@ def scores(request):
     return HttpResponse(simplejson.dumps(data), mimetype="application/json")
 
 # TODO benchmarking
-

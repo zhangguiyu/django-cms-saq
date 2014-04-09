@@ -91,7 +91,7 @@ class SubmissionSetAdmin(admin.ModelAdmin):
         return qlist
 
 class SubmissionAdmin(admin.ModelAdmin):
-    list_display = ('question', 'answer', 'score', 'user', 'submission_set')
+    list_display = ('question', 'answer', 'score', 'user', 'ip', 'date', 'submission_set')
 
 class FormNavAdmin(admin.ModelAdmin):
     list_display = ('version', 'prev_page', 'prev_page_label', 'next_page', 'next_page_label', 'end_page', 'end_page_label', 'end_page_condition_question', 'end_submission_set', 'submission_set_tag')

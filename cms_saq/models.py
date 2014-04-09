@@ -1,21 +1,18 @@
+from datetime import datetime
+
 from django.db import models
 from django.db.models import Max, Sum
 
-from cms.models import CMSPlugin, Page, Placeholder
-from cms.models.fields import PageField
-from taggit.managers import TaggableManager
-
-from cms.plugins.text.models import AbstractText
-
-# kuiyu multi-lingual
-from hvad.models import TranslatableModel, TranslatedFields
-#from parler.models import TranslatableModel, TranslatedFields
-
 from django.utils.translation import ugettext_lazy as _
-
 from django.core.exceptions import ValidationError
 
+from cms.models import CMSPlugin, Page, Placeholder
+from cms.models.fields import PageField
+from cms.plugins.text.models import AbstractText
 
+#from parler.models import TranslatableModel, TranslatedFields
+from hvad.models import TranslatableModel, TranslatedFields
+from taggit.managers import TaggableManager
 
 def cleanUser(user):
     '''
@@ -192,8 +189,11 @@ class QA(CMSPlugin):
 
 class SubmissionSet(models.Model):
     """ A set of submissions stored and associated with a particular user to
-        provide a mechanism through which a single user can provide repeated
-        sets of answers to the same questionnaire.
+        allow a single user to submit multiple answers to the same
+        questionnaire.
+
+        User in this case could be a restaurant staff proxy, who logged into
+        system for patrons to do survey.
     """
     slug = models.SlugField(blank=True)
     user = models.ForeignKey('auth.User', related_name='submission_sets')
@@ -203,11 +203,13 @@ class SubmissionSet(models.Model):
 
 
 class Submission(models.Model):
-    # todo: add date
+    # todo: add date, IP
     question = models.SlugField()
     answer = models.TextField(blank=True)
     score = models.IntegerField()
     user = models.ForeignKey('auth.User', related_name='submissions')
+    date = models.DateTimeField(_('Submission Date'), default=datetime.now())
+    ip  = models.CharField(max_length=255, blank=True, null=True)
 
     submission_set = models.ForeignKey(
         SubmissionSet, related_name='submissions', null=True)
@@ -243,18 +245,18 @@ class FormNav(CMSPlugin):
 
     end_page_condition_question = models.ForeignKey(
         Question, null=True, blank=True,
-        help_text=_("If set, End link will be shown if this question is answered. Typically this is the last question in your survey. Beware, if you set this question. End link is visible even if user answered just 1 question, the end condition question, out of N questions."))
+        help_text=_("End link/button will be shown only if this question is answered. Typically this is the last question in your survey. Beware, if you set this question. End link will be visible even if user answered just this end condition question."))
 
     end_submission_set = models.CharField(
         max_length=255,
         blank=True,
         null=True,
-        help_text=_("Slug for OPTIONAL submission set. If defined, on submit, a unique submission set (per page) with this Slug will be created to group all submissions from the SAME page with THE question tag defined below. If Slug already exists, a numeric suffix will be appended, e.g., slug1, slug2, slug3. Note that questions on different pages will NOT be in the same submission set.")
+        help_text=_("Slug PREFIX for OPTIONAL UNIQUE submission set, which will collate submissions for EACH page that contain question tag defined below. Questions not tagged with the following question tag will NOT be part of the submission set. A numeric suffix will be appended, e.g., subset1, subset2, if slug is 'subset' for each page. E.g., answers on page 1 will be collated into subset33, answers on page2 will be collated into subset34 for slug='subset'")
         )
 
     submission_set_tag = models.CharField(
         max_length=255, blank=True, null=True,
-        help_text=_("Question tag for the submission set. Answers to Questions with this tag will be part of the submission set for EACH page.")
+        help_text=_("Question tag to associate with the submission set. Answers to Questions with this tag will be part of the above submission set.")
         )
 
     # not needed correctly copied automatically by django-cms
@@ -291,10 +293,13 @@ class ScoreSection(models.Model):
 class ProgressBar(CMSPlugin):
     count_optional = models.BooleanField(default=False)
 
+    # TODO: fix for non-login users
     def progress_for_user(self, user):
+        qas = QA.all_in_tree(self.page)
+        if user is None:    # TODO
+            return 0, qas.count()
         subs = Submission.objects.filter(
             user=user.id).values_list('question', flat=True)
-        qas = QA.all_in_tree(self.page)
 
 #        if not self.count_optional:
 #            qas = qas.filter(optional=False)

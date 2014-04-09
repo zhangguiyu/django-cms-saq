@@ -10,6 +10,8 @@ from cms_saq.models import Question, Answer, GroupedAnswer, Submission, \
         FormNav, ProgressBar, SectionedScoring, ScoreSection, BulkAnswer, \
         QuestionnaireText, QA, AnswerSet
 
+from cms_saq.models import cleanUser
+
 
 from cms.plugins.text.cms_plugins import TextPlugin
 from cms.plugins.text.models import Text
@@ -48,7 +50,7 @@ class QuestionnaireTextPlugin(TranslatedTextPlugin):
 
     def render(self, context, instance, placeholder):
         context = super(QuestionnaireTextPlugin, self).render(context, instance, placeholder)
-        user = context['request'].user
+        user = cleanUser(context['request'].user)
 
         triggered = True
         depends_on = None
@@ -124,6 +126,7 @@ class QAPlugin(CMSPluginBase):
     # todo: use different template for different questions
     render_template = "cms_saq/QAPlugin.html"
     def render(self, context, instance, placeholder):
+#        user = cleanUser(context['request'].user)
         user = context['request'].user
         submission_set = None
         triggered = True
@@ -151,15 +154,16 @@ class QAPlugin(CMSPluginBase):
         }
         if instance.question.question_type != 'F':
             extra.update({'answers': instance.question.answerset.answers.all()})
-        if user.is_authenticated():
-            try:
-                extra['submission'] = Submission.objects.get(
-                    user=user,
-                    question=instance.question.slug,
-                    submission_set = submission_set
-                )
-            except Submission.DoesNotExist:
-                pass
+        if user is not None:
+            if user.is_authenticated():
+                try:
+                    extra['submission'] = Submission.objects.get(
+                        user=user,
+                        question=instance.question.slug,
+                        submission_set = submission_set
+                    )
+                except Submission.DoesNotExist:
+                    pass
         context.update(extra)
         return context
 
@@ -233,10 +237,11 @@ class FormNavPlugin(CMSPluginBase):
     def render(self, context, instance, placeholder):
         met_end_condition = False
 
+        user = cleanUser(context['user'])
         if instance.end_page_condition_question:
             end_condition_slug = instance.end_page_condition_question.slug
             met_end_condition = (Submission.objects
-                .filter(user=context['user'], question=end_condition_slug)
+                .filter(user=user, question=end_condition_slug)
                 .count()) > 0
         context.update({
             'instance': instance,
@@ -257,7 +262,8 @@ class SectionedScoringPlugin(CMSPluginBase):
     inlines = [ScoreSectionAdmin]
 
     def render(self, context, instance, placeholder):
-        scores, overall = instance.scores_for_user(context['request'].user)
+        user = cleanUser(context['request'].user)
+        scores, overall = instance.scores_for_user(user)
         context.update({
             'scores': scores,
             'overall': overall
@@ -271,11 +277,12 @@ class ProgressBarPlugin(CMSPluginBase):
     render_template = "cms_saq/progress_bar.html"
 
     def render(self, context, instance, placeholder):
-        answered, total = instance.progress_for_user(context['request'].user)
+        user = cleanUser(context['request'].user)
+        answered, total = instance.progress_for_user(user)
         context.update({
             'answered': answered,
             'total': total,
-            'progress': float(answered) / float(total) * 100,
+            'progress': float(answered) / float(max(1,total)) * 100,
         })
         return context
 
